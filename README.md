@@ -60,6 +60,8 @@ Average FPS
 
 Frame Stability Score
 
+Frame Time Distribution Visualization
+
 ---
 
 ## Example Workflow
