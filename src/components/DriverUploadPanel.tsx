@@ -1,0 +1,144 @@
+import { useCallback, useRef } from 'react';
+import { Upload, FileText, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import type { DriverDataset, UploadStatus } from '../types/telemetry';
+
+interface Props {
+  label: string;
+  driverKey: 'A' | 'B';
+  status: UploadStatus;
+  dataset: DriverDataset | null;
+  onFileSelect: (file: File) => void;
+  onClear: () => void;
+}
+
+export default function DriverUploadPanel({
+  label,
+  driverKey,
+  status,
+  dataset,
+  onFileSelect,
+  onClear,
+}: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.csv')) {
+        onFileSelect(file);
+      }
+    },
+    [onFileSelect]
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const accentTextClass = driverKey === 'A' ? 'text-nvidia-green' : 'text-nvidia-accent';
+  const accentTextDimClass = driverKey === 'A' ? 'text-nvidia-green/60' : 'text-nvidia-accent/60';
+
+  return (
+    <div className="group rounded-lg border border-nvidia-border bg-nvidia-panel p-4 transition-all hover:border-nvidia-green/30">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div
+            className={`flex h-6 w-6 items-center justify-center rounded text-xs font-bold ${
+              driverKey === 'A'
+                ? 'bg-nvidia-green/20 text-nvidia-green'
+                : 'bg-nvidia-accent/20 text-nvidia-accent'
+            }`}
+          >
+            {driverKey}
+          </div>
+          <span className="font-mono text-sm font-medium text-nvidia-text">{label}</span>
+        </div>
+        {dataset && (
+          <button
+            onClick={onClear}
+            className="rounded p-1 text-nvidia-muted transition-colors hover:bg-nvidia-bg hover:text-nvidia-danger"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {status === 'ready' && dataset ? (
+        <div className="animate-fade-in space-y-2">
+          <div className="flex items-center gap-2 rounded-md bg-nvidia-bg/60 px-3 py-2 ring-1 ring-nvidia-border">
+            <FileText className={`h-4 w-4 ${accentTextClass}`} />
+            <span className="truncate font-mono text-xs text-nvidia-text">
+              {dataset.fileName}
+            </span>
+            <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-nvidia-green" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <MiniStat label="Frames" value={dataset.frames.length.toLocaleString()} />
+            <MiniStat
+              label="Avg FPS"
+              value={(
+                dataset.frames.reduce((s, f) => s + f.fps, 0) / dataset.frames.length
+              ).toFixed(1)}
+            />
+          </div>
+        </div>
+      ) : (
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onClick={() => inputRef.current?.click()}
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-4 py-6 transition-all ${
+            status === 'error'
+              ? 'border-nvidia-danger/50 bg-nvidia-danger/5'
+              : 'border-nvidia-border bg-nvidia-bg/30 hover:border-nvidia-green/40 hover:bg-nvidia-green/5'
+          }`}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onFileSelect(file);
+            }}
+          />
+          {status === 'processing' || status === 'uploading' ? (
+            <>
+              <div className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-nvidia-green/30 border-t-nvidia-green" />
+              <span className="font-mono text-xs text-nvidia-muted">Processing telemetry data...</span>
+            </>
+          ) : status === 'error' ? (
+            <>
+              <AlertCircle className="mb-2 h-6 w-6 text-nvidia-danger" />
+              <span className="font-mono text-xs text-nvidia-danger">Invalid CSV format</span>
+              <span className="mt-1 font-mono text-[10px] text-nvidia-muted">Click to retry</span>
+            </>
+          ) : (
+            <>
+              <Upload className={`mb-2 h-6 w-6 ${accentTextDimClass}`} />
+              <span className="font-mono text-xs text-nvidia-muted">
+                Drop CSV or click to upload
+              </span>
+              <span className="mt-1 font-mono text-[10px] text-nvidia-muted/60">
+                Requires FrameTime column
+              </span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded bg-nvidia-bg/40 px-2 py-1.5 ring-1 ring-nvidia-border/50">
+      <div className="font-mono text-[10px] uppercase tracking-wider text-nvidia-muted">
+        {label}
+      </div>
+      <div className="font-mono text-sm font-medium text-nvidia-text">{value}</div>
+    </div>
+  );
+}

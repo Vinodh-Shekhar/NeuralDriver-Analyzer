@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-nvidia-bg text-nvidia-text antialiased;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #3a3a3a;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4a;
+  }
+
+  ::selection {
+    background: rgba(118, 185, 0, 0.3);
+    color: #e6e6e6;
+  }
+}
+
+@layer utilities {
+  .glow-green {
+    box-shadow: 0 0 12px rgba(118, 185, 0, 0.3), 0 0 4px rgba(118, 185, 0, 0.2);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 12px rgba(0, 255, 156, 0.3), 0 0 4px rgba(0, 255, 156, 0.2);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 12px rgba(255, 77, 77, 0.3), 0 0 4px rgba(255, 77, 77, 0.2);
+  }
+
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(118, 185, 0, 0.5);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 8px rgba(0, 255, 156, 0.5);
+  }
+}
