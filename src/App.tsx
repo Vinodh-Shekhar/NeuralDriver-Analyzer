@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Zap } from 'lucide-react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
 import GpuStatusWidget from './components/GpuStatusWidget';
@@ -10,6 +11,7 @@ import RegressionPanel from './components/RegressionPanel';
 import TelemetryWidgets from './components/TelemetryWidgets';
 import { parseCSV, readFileAsText } from './lib/csvParser';
 import { calculateMetrics, runQAAnalysis, detectRegression } from './lib/analysis';
+import { generateSampleDatasets } from './lib/sampleData';
 import { supabase } from './lib/supabase';
 import type {
   DriverDataset,
@@ -151,6 +153,24 @@ export default function App() {
     setRegression(null);
   }, []);
 
+  const handleGenerateSample = useCallback(() => {
+    const { datasetA: sampleA, datasetB: sampleB } = generateSampleDatasets();
+
+    setDatasetA(sampleA);
+    setDatasetB(sampleB);
+    setStatusA('ready');
+    setStatusB('ready');
+
+    const mA = calculateMetrics(sampleA.rawFrameTimes);
+    const mB = calculateMetrics(sampleB.rawFrameTimes);
+    setMetricsA(mA);
+    setMetricsB(mB);
+
+    setAnalysisA(runQAAnalysis(sampleA.rawFrameTimes));
+    setAnalysisB(runQAAnalysis(sampleB.rawFrameTimes));
+    setRegression(detectRegression(mA, mB));
+  }, []);
+
   const hasData = !!datasetA || !!datasetB;
 
   return (
@@ -179,6 +199,21 @@ export default function App() {
             />
             <GpuStatusWidget hasData={hasData} />
           </div>
+
+          {!hasData && (
+            <div className="flex items-center justify-center">
+              <button
+                onClick={handleGenerateSample}
+                className="group relative flex items-center gap-2.5 rounded-lg border border-nvidia-green/30 bg-nvidia-green/5 px-5 py-2.5 font-mono text-sm font-medium text-nvidia-green transition-all hover:border-nvidia-green/60 hover:bg-nvidia-green/10 hover:shadow-[0_0_20px_rgba(118,185,0,0.15)] active:scale-[0.98]"
+              >
+                <Zap className="h-4 w-4 transition-transform group-hover:scale-110" />
+                Generate Sample Telemetry
+                <span className="ml-1 rounded bg-nvidia-green/15 px-1.5 py-0.5 font-mono text-[10px] text-nvidia-green/80">
+                  DEMO
+                </span>
+              </button>
+            </div>
+          )}
 
           {/* Telemetry Score Widgets */}
           {hasData && (
