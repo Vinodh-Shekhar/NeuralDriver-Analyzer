@@ -270,9 +270,14 @@ export default function App() {
           {/* Footer */}
           <footer className="border-t border-nvidia-border pt-4 pb-8">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px] text-nvidia-muted">
-                NeuralDriver QA Inspector v1.0.0
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[10px] text-nvidia-muted">
+                  NeuralDriver QA Inspector v1.0.0
+                </span>
+                <span className="text-[10px] text-gray-600">
+                  Prototype by Vinodh Shekhar
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-nvidia-green animate-pulse-glow" />
                 <span className="font-mono text-[10px] text-nvidia-muted">
