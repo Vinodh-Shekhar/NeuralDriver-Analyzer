@@ -1,4 +1,5 @@
 import { Fan, Thermometer, Zap, MemoryStick } from 'lucide-react';
+import DualFanGpu from './DualFanGpu';
 
 interface Props {
   hasData: boolean;
@@ -13,7 +14,7 @@ export default function GpuStatusWidget({ hasData }: Props) {
   return (
     <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-4">
       <div className="mb-3 flex items-center gap-2">
-        <Fan className="h-4 w-4 animate-fan-spin text-nvidia-green" />
+        <DualFanGpu size="sm" spinning />
         <span className="font-mono text-sm font-medium text-nvidia-text">GPU Status</span>
         <div
           className={`ml-auto h-2 w-2 rounded-full ${

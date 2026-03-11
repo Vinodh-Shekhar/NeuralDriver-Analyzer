@@ -23,6 +23,7 @@ export default {
       },
       animation: {
         'fan-spin': 'fan-spin 2s linear infinite',
+        'fan-spin-reverse': 'fan-spin-reverse 2s linear infinite',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
         'fade-in': 'fade-in 0.5s ease-out',
         'slide-up': 'slide-up 0.4s ease-out',
@@ -31,6 +32,10 @@ export default {
         'fan-spin': {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' },
+        },
+        'fan-spin-reverse': {
+          '0%': { transform: 'rotate(360deg)' },
+          '100%': { transform: 'rotate(0deg)' },
         },
         'pulse-glow': {
           '0%, 100%': { opacity: '1', boxShadow: '0 0 8px rgba(118, 185, 0, 0.4)' },

@@ -1,4 +1,5 @@
-import { Fan, Cpu, Activity } from 'lucide-react';
+import { Cpu, Activity } from 'lucide-react';
+import DualFanGpu from './DualFanGpu';
 
 export default function Header() {
   return (
@@ -9,7 +10,7 @@ export default function Header() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-nvidia-green/10 ring-1 ring-nvidia-green/30">
-                <Fan className="h-7 w-7 animate-fan-spin text-nvidia-green" />
+                <DualFanGpu size="lg" spinning />
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-nvidia-accent shadow-[0_0_8px_rgba(0,255,156,0.6)]" />
             </div>
