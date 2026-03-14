@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Zap } from 'lucide-react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
 import GpuStatusWidget from './components/GpuStatusWidget';
+import DemoCTA from './components/DemoCTA';
 import MetricsPanel from './components/MetricsPanel';
 import { SingleFrameTimeChart, ComparisonChart } from './components/FrameTimeChart';
 import FrameTimeDistribution from './components/FrameTimeDistribution';
@@ -200,20 +200,7 @@ export default function App() {
             <GpuStatusWidget hasData={hasData} />
           </div>
 
-          {!hasData && (
-            <div className="flex items-center justify-center">
-              <button
-                onClick={handleGenerateSample}
-                className="group relative flex items-center gap-2.5 rounded-lg border border-nvidia-green/30 bg-nvidia-green/5 px-5 py-2.5 font-mono text-sm font-medium text-nvidia-green transition-all hover:border-nvidia-green/60 hover:bg-nvidia-green/10 hover:shadow-[0_0_20px_rgba(118,185,0,0.15)] active:scale-[0.98]"
-              >
-                <Zap className="h-4 w-4 transition-transform group-hover:scale-110" />
-                Generate Sample Telemetry
-                <span className="ml-1 rounded bg-nvidia-green/15 px-1.5 py-0.5 font-mono text-[10px] text-nvidia-green/80">
-                  DEMO
-                </span>
-              </button>
-            </div>
-          )}
+          {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
 
           {/* Telemetry Score Widgets */}
           {hasData && (
