@@ -6,7 +6,11 @@ Supports native Nvidia FrameView CSV exports as well as generic frame time captu
 
 ## Dashboard Demo
 
-![NeuralDriver Performance Analyzer](screenshots/dashboard-demo.png)
+![NeuralDriver Performance Analyzer](public/screenshots/framebench-analyzer.png)
+
+## Performance Report
+
+![Performance Report](public/screenshots/performance-report.png)
 
 ## Live Demo
 
