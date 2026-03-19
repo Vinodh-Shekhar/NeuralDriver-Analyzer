@@ -11,6 +11,7 @@ const FRAME_TIME_HEADERS = [
 ];
 
 export const MAX_RENDER_FRAMES = 25_000;
+export const MAX_ROWS_TO_PARSE = 50_000;
 const YIELD_INTERVAL = 5_000;
 
 const FPS_HIST_BUCKETS = 2_000;
@@ -19,7 +20,7 @@ const FPS_BUCKET_WIDTH = FPS_HIST_MAX / FPS_HIST_BUCKETS;
 
 const FILE_SIZE_STREAM_THRESHOLD = 2 * 1024 * 1024;
 
-export const MAX_FILE_SIZE = 200 * 1024 * 1024;
+export const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
 function extractNthColumn(line: string, colIndex: number): string {
   let col = 0;
@@ -112,11 +113,7 @@ export async function parseCSVFile(
   try {
     return await parseInWorker(file, label, onProgress);
   } catch {
-    if (file.size > FILE_SIZE_STREAM_THRESHOLD) {
-      return parseCSVFileStreaming(file, label, onProgress);
-    }
-    const text = await readFileAsText(file);
-    return parseCSVText(text, label, file.name, onProgress ? (frames) => onProgress(frames, file.size, file.size) : undefined);
+    return parseCSVFileStreaming(file, label, onProgress);
   }
 }
 
@@ -154,9 +151,10 @@ async function parseCSVFileStreaming(
   let leftover = '';
   let bytesRead = 0;
   let yieldCounter = 0;
+  let rowCapReached = false;
 
-  const processLine = (line: string) => {
-    if (line === '') return;
+  const processLine = (line: string): boolean => {
+    if (line === '') return false;
 
     if (headerLine === null) {
       headerLine = line;
@@ -165,7 +163,7 @@ async function parseCSVFileStreaming(
       if (frameTimeIndex === -1) {
         throw new Error('CSV must contain a "FrameTime" or "MsBetweenPresents" column');
       }
-      return;
+      return false;
     }
 
     if (!firstDataRowParsed) {
@@ -175,12 +173,16 @@ async function parseCSVFileStreaming(
     }
 
     const raw = extractNthColumn(line, frameTimeIndex);
-    if (raw === '' || raw === 'NA' || raw === 'na') return;
+    if (raw === '' || raw === 'NA' || raw === 'na') return false;
 
     const frameTime = parseFloat(raw);
-    if (isNaN(frameTime) || frameTime <= 0) return;
+    if (isNaN(frameTime) || frameTime <= 0) return false;
 
     n++;
+
+    if (n > MAX_ROWS_TO_PARSE) {
+      return true;
+    }
 
     const delta = frameTime - wMean;
     wMean += delta / n;
@@ -205,9 +207,10 @@ async function parseCSVFileStreaming(
       }
       nextSampleAt += sampleStep;
     }
+    return false;
   };
 
-  while (true) {
+  outer: while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     bytesRead += value.byteLength;
@@ -216,7 +219,11 @@ async function parseCSVFileStreaming(
     const lines = combined.split('\n');
     leftover = lines.pop() ?? '';
     for (const line of lines) {
-      processLine(line.trim());
+      const capped = processLine(line.trim());
+      if (capped) {
+        rowCapReached = true;
+        break outer;
+      }
       yieldCounter++;
     }
     onProgress?.(n, bytesRead, file.size);
@@ -225,12 +232,14 @@ async function parseCSVFileStreaming(
       yieldCounter = 0;
     }
   }
-  if (leftover.trim()) processLine(leftover.trim());
+  reader.cancel().catch(() => {});
+  if (!rowCapReached && leftover.trim()) processLine(leftover.trim());
 
   if (n === 0) throw new Error('No valid frame time data found in CSV');
+  const framesAnalyzed = Math.min(n, MAX_ROWS_TO_PARSE);
 
   const avgFt = wMean;
-  const variance = n > 1 ? wM2 / n : 0;
+  const variance = framesAnalyzed > 1 ? wM2 / framesAnalyzed : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
   for (const frameTime of sampledFrameTimes) {
@@ -244,19 +253,19 @@ async function parseCSVFileStreaming(
   }
 
   const sampleSize = sampledFrameTimes.length;
-  if (sampleSize > 0 && sampleSize < n) {
-    const scaleFactor = n / sampleSize;
+  if (sampleSize > 0 && sampleSize < framesAnalyzed) {
+    const scaleFactor = framesAnalyzed / sampleSize;
     stutterCount = Math.round(stutterCount * scaleFactor);
     highCount = Math.round(highCount * scaleFactor);
     medCount = Math.round(medCount * scaleFactor);
     deviationSum = deviationSum * scaleFactor;
   }
 
-  const avgDeviation = n > 0 ? deviationSum / n : 0;
-  const truncated = n > MAX_RENDER_FRAMES;
+  const avgDeviation = framesAnalyzed > 0 ? deviationSum / framesAnalyzed : 0;
+  const truncated = framesAnalyzed > MAX_RENDER_FRAMES;
 
   const frameObjects: FrameDataPoint[] = sampledFrameTimes.map((frameTime, i) => ({
-    frame: Math.round((i / sampledFrameTimes.length) * n) + 1,
+    frame: Math.round((i / sampledFrameTimes.length) * framesAnalyzed) + 1,
     frameTime,
     fps: 1000 / frameTime,
   }));
@@ -267,11 +276,12 @@ async function parseCSVFileStreaming(
     frames: frameObjects,
     metadata,
     truncated,
-    totalFrameCount: n,
+    partialRead: rowCapReached,
+    totalFrameCount: framesAnalyzed,
   };
 
   const { metrics, analysis } = computeMetricsFromAccumulator({
-    n, sum: avgFt * n, sumSq: (variance + avgFt * avgFt) * n, minFt, maxFt,
+    n: framesAnalyzed, sum: avgFt * framesAnalyzed, sumSq: (variance + avgFt * avgFt) * framesAnalyzed, minFt, maxFt,
     fpsHistogram, fpsHistBuckets: FPS_HIST_BUCKETS, fpsBucketWidth: FPS_BUCKET_WIDTH,
     stutterCount, avgDeviation, variance, highCount, medCount, avgFt, stdDev,
   });
@@ -323,6 +333,7 @@ export async function parseCSVText(
   let pos = bodyStart;
   const len = csvText.length;
   let rowIndex = 0;
+  let partialRead = false;
 
   while (pos < len) {
     let lineEnd = csvText.indexOf('\n', pos);
@@ -340,6 +351,11 @@ export async function parseCSVText(
     if (isNaN(frameTime) || frameTime <= 0) continue;
 
     n++;
+
+    if (n > MAX_ROWS_TO_PARSE) {
+      partialRead = true;
+      break;
+    }
 
     const delta = frameTime - wMean;
     wMean += delta / n;
@@ -376,8 +392,10 @@ export async function parseCSVText(
     throw new Error('No valid frame time data found in CSV');
   }
 
+  const framesAnalyzed = Math.min(n, MAX_ROWS_TO_PARSE);
+
   const avgFt = wMean;
-  const variance = n > 1 ? wM2 / n : 0;
+  const variance = framesAnalyzed > 1 ? wM2 / framesAnalyzed : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
   for (const frameTime of sampledFrameTimes) {
@@ -391,19 +409,19 @@ export async function parseCSVText(
   }
 
   const sampleSize = sampledFrameTimes.length;
-  if (sampleSize > 0 && sampleSize < n) {
-    const scaleFactor = n / sampleSize;
+  if (sampleSize > 0 && sampleSize < framesAnalyzed) {
+    const scaleFactor = framesAnalyzed / sampleSize;
     stutterCount = Math.round(stutterCount * scaleFactor);
     highCount = Math.round(highCount * scaleFactor);
     medCount = Math.round(medCount * scaleFactor);
     deviationSum = deviationSum * scaleFactor;
   }
 
-  const avgDeviation = deviationSum / n;
-  const truncated = n > MAX_RENDER_FRAMES;
+  const avgDeviation = deviationSum / framesAnalyzed;
+  const truncated = framesAnalyzed > MAX_RENDER_FRAMES;
 
   const frames: FrameDataPoint[] = sampledFrameTimes.map((frameTime, i) => ({
-    frame: Math.round((i / sampledFrameTimes.length) * n) + 1,
+    frame: Math.round((i / sampledFrameTimes.length) * framesAnalyzed) + 1,
     frameTime,
     fps: 1000 / frameTime,
   }));
@@ -414,13 +432,14 @@ export async function parseCSVText(
     frames,
     metadata,
     truncated,
-    totalFrameCount: n,
+    partialRead,
+    totalFrameCount: framesAnalyzed,
   };
 
   const { metrics, analysis } = computeMetricsFromAccumulator({
-    n,
-    sum: avgFt * n,
-    sumSq: (variance + avgFt * avgFt) * n,
+    n: framesAnalyzed,
+    sum: avgFt * framesAnalyzed,
+    sumSq: (variance + avgFt * avgFt) * framesAnalyzed,
     minFt,
     maxFt,
     fpsHistogram,

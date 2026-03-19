@@ -10,6 +10,7 @@ const FRAME_TIME_HEADERS = [
 ];
 
 const MAX_RENDER_FRAMES = 25_000;
+const MAX_ROWS_TO_PARSE = 50_000;
 const FPS_HIST_BUCKETS = 2_000;
 const FPS_HIST_MAX = 2000;
 const FPS_BUCKET_WIDTH = FPS_HIST_MAX / FPS_HIST_BUCKETS;
@@ -132,9 +133,10 @@ async function parseFile(file: File, label: string) {
   let leftover = '';
   let bytesRead = 0;
   let lastProgressAt = 0;
+  let rowCapReached = false;
 
-  const processLine = (line: string) => {
-    if (line === '') return;
+  const processLine = (line: string): boolean => {
+    if (line === '') return false;
 
     if (headerLine === null) {
       headerLine = line;
@@ -143,7 +145,7 @@ async function parseFile(file: File, label: string) {
       if (frameTimeIndex === -1) {
         throw new Error('CSV must contain a "FrameTime" or "MsBetweenPresents" column');
       }
-      return;
+      return false;
     }
 
     if (!firstDataRowParsed) {
@@ -153,12 +155,16 @@ async function parseFile(file: File, label: string) {
     }
 
     const raw = extractNthColumn(line, frameTimeIndex);
-    if (raw === '' || raw === 'NA' || raw === 'na') return;
+    if (raw === '' || raw === 'NA' || raw === 'na') return false;
 
     const frameTime = parseFloat(raw);
-    if (isNaN(frameTime) || frameTime <= 0) return;
+    if (isNaN(frameTime) || frameTime <= 0) return false;
 
     n++;
+
+    if (n > MAX_ROWS_TO_PARSE) {
+      return true;
+    }
 
     const delta = frameTime - wMean;
     wMean += delta / n;
@@ -183,9 +189,10 @@ async function parseFile(file: File, label: string) {
       }
       nextSampleAt += sampleStep;
     }
+    return false;
   };
 
-  while (true) {
+  outer: while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     bytesRead += value.byteLength;
@@ -194,19 +201,26 @@ async function parseFile(file: File, label: string) {
     const lines = combined.split('\n');
     leftover = lines.pop() ?? '';
     for (const line of lines) {
-      processLine(line.trim());
+      const capped = processLine(line.trim());
+      if (capped) {
+        rowCapReached = true;
+        break outer;
+      }
     }
     if (bytesRead - lastProgressAt > 100_000) {
       self.postMessage({ type: 'progress', frames: n, bytes: bytesRead, total: file.size } satisfies WorkerProgressMessage);
       lastProgressAt = bytesRead;
     }
   }
-  if (leftover.trim()) processLine(leftover.trim());
+  reader.cancel().catch(() => {});
+  if (!rowCapReached && leftover.trim()) processLine(leftover.trim());
 
   if (n === 0) throw new Error('No valid frame time data found in CSV');
 
+  const framesAnalyzed = Math.min(n, MAX_ROWS_TO_PARSE);
+
   const avgFt = wMean;
-  const variance = n > 1 ? wM2 / n : 0;
+  const variance = framesAnalyzed > 1 ? wM2 / framesAnalyzed : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
   for (const frameTime of sampledFrameTimes) {
@@ -220,19 +234,19 @@ async function parseFile(file: File, label: string) {
   }
 
   const sampleSize = sampledFrameTimes.length;
-  if (sampleSize > 0 && sampleSize < n) {
-    const scaleFactor = n / sampleSize;
+  if (sampleSize > 0 && sampleSize < framesAnalyzed) {
+    const scaleFactor = framesAnalyzed / sampleSize;
     stutterCount = Math.round(stutterCount * scaleFactor);
     highCount = Math.round(highCount * scaleFactor);
     medCount = Math.round(medCount * scaleFactor);
     deviationSum = deviationSum * scaleFactor;
   }
 
-  const avgDeviation = n > 0 ? deviationSum / n : 0;
-  const truncated = n > MAX_RENDER_FRAMES;
+  const avgDeviation = framesAnalyzed > 0 ? deviationSum / framesAnalyzed : 0;
+  const truncated = framesAnalyzed > MAX_RENDER_FRAMES;
 
   const frames: FrameDataPoint[] = sampledFrameTimes.map((frameTime, i) => ({
-    frame: Math.round((i / sampledFrameTimes.length) * n) + 1,
+    frame: Math.round((i / sampledFrameTimes.length) * framesAnalyzed) + 1,
     frameTime,
     fps: 1000 / frameTime,
   }));
@@ -243,17 +257,18 @@ async function parseFile(file: File, label: string) {
     frames,
     metadata,
     truncated,
-    totalFrameCount: n,
+    partialRead: rowCapReached,
+    totalFrameCount: framesAnalyzed,
   };
 
   const avgFps = 1000 / avgFt;
   const minFps = 1000 / maxFt;
   const maxFps = 1000 / minFt;
   const framePacingStability = Math.max(0, Math.min(100, (1 - avgDeviation) * 100));
-  const stutterScore = (stutterCount / n) * 100;
+  const stutterScore = (stutterCount / framesAnalyzed) * 100;
 
-  const p1Low = percentileFromHistogram(fpsHistogram, FPS_HIST_BUCKETS, FPS_BUCKET_WIDTH, n, 0.01);
-  const p01Low = percentileFromHistogram(fpsHistogram, FPS_HIST_BUCKETS, FPS_BUCKET_WIDTH, n, 0.001);
+  const p1Low = percentileFromHistogram(fpsHistogram, FPS_HIST_BUCKETS, FPS_BUCKET_WIDTH, framesAnalyzed, 0.01);
+  const p01Low = percentileFromHistogram(fpsHistogram, FPS_HIST_BUCKETS, FPS_BUCKET_WIDTH, framesAnalyzed, 0.001);
 
   const metrics: PerformanceMetrics = {
     averageFps: Math.round(avgFps * 100) / 100,
@@ -268,9 +283,9 @@ async function parseFile(file: File, label: string) {
   };
 
   const instabilityWarnings: string[] = [];
-  if (highCount > n * 0.02) {
+  if (highCount > framesAnalyzed * 0.02) {
     instabilityWarnings.push(
-      `High spike rate: ${highCount} severe frame spikes detected (${((highCount / n) * 100).toFixed(1)}%)`
+      `High spike rate: ${highCount} severe frame spikes detected (${((highCount / framesAnalyzed) * 100).toFixed(1)}%)`
     );
   }
   if (framePacingStability < 85) {
@@ -292,10 +307,10 @@ async function parseFile(file: File, label: string) {
 
   let stabilityRating: 'PASS' | 'WARNING' | 'FAIL';
   let overallScore: number;
-  if (highCount > n * 0.05 || framePacingStability < 70 || stutterScore > 10) {
+  if (highCount > framesAnalyzed * 0.05 || framePacingStability < 70 || stutterScore > 10) {
     stabilityRating = 'FAIL';
     overallScore = Math.max(0, 40 - highCount);
-  } else if (highCount > n * 0.01 || medCount > n * 0.05 || framePacingStability < 85 || stutterScore > 3) {
+  } else if (highCount > framesAnalyzed * 0.01 || medCount > framesAnalyzed * 0.05 || framePacingStability < 85 || stutterScore > 3) {
     stabilityRating = 'WARNING';
     overallScore = Math.max(40, 75 - highCount - medCount * 0.5);
   } else {
@@ -304,11 +319,11 @@ async function parseFile(file: File, label: string) {
   }
 
   const analysis: QAAnalysis = {
-    anomalyCounts: { high: highCount, medium: medCount, low: Math.max(0, n - highCount - medCount) },
+    anomalyCounts: { high: highCount, medium: medCount, low: Math.max(0, framesAnalyzed - highCount - medCount) },
     instabilityWarnings,
     stabilityRating,
     overallScore: Math.round(overallScore),
-    totalFrames: n,
+    totalFrames: framesAnalyzed,
   };
 
   return { dataset, metrics, analysis };

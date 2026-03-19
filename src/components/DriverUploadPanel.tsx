@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { Upload, FileText, X, CheckCircle2, AlertCircle, Cpu, Monitor } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle2, AlertCircle, Cpu, Monitor, Info } from 'lucide-react';
 import type { DriverDataset, UploadStatus } from '../types/telemetry';
-import { MAX_FILE_SIZE } from '../lib/csvParser';
+import { MAX_FILE_SIZE, MAX_ROWS_TO_PARSE } from '../lib/csvParser';
 
 interface Props {
   label: string;
@@ -139,6 +139,14 @@ export default function DriverUploadPanel({
               ).toFixed(1)}
             />
           </div>
+          {dataset.partialRead && (
+            <div className="flex items-start gap-1.5 rounded bg-amber-500/10 px-2 py-1.5 ring-1 ring-amber-500/30">
+              <Info className="mt-0.5 h-3 w-3 shrink-0 text-amber-400" />
+              <span className="font-mono text-[10px] leading-tight text-amber-400">
+                Analysis based on first {MAX_ROWS_TO_PARSE.toLocaleString()} frames. File contained more data.
+              </span>
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -204,6 +212,9 @@ export default function DriverUploadPanel({
               </span>
               <span className="mt-1 font-mono text-[10px] text-nvidia-muted/60">
                 FrameView, PresentMon, or custom CSV
+              </span>
+              <span className="mt-0.5 font-mono text-[10px] text-nvidia-muted/40">
+                Max {MAX_FILE_SIZE / 1024 / 1024}MB &mdash; first {MAX_ROWS_TO_PARSE.toLocaleString()} frames analyzed
               </span>
             </>
           )}

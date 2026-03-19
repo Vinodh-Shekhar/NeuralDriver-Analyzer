@@ -18,6 +18,7 @@ export interface DriverDataset {
   frames: FrameDataPoint[];
   metadata?: FrameViewMetadata;
   truncated?: boolean;
+  partialRead?: boolean;
   totalFrameCount: number;
 }
 
