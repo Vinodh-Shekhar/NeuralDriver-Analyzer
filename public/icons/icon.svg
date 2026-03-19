@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <rect x="20" y="20" width="472" height="472" rx="80" fill="#111111"/>
+  <!-- GPU body -->
+  <rect x="80" y="180" width="352" height="160" rx="16" fill="#1a1a1a" stroke="#76b900" stroke-width="3"/>
+  <!-- Fan left -->
+  <circle cx="176" cy="260" r="52" fill="#0d0d0d" stroke="#333" stroke-width="2"/>
+  <circle cx="176" cy="260" r="36" fill="#161616"/>
+  <circle cx="176" cy="260" r="10" fill="#76b900"/>
+  <!-- Fan blades left -->
+  <path d="M176 224 Q190 242 176 260 Q162 242 176 224" fill="#76b900" opacity="0.7"/>
+  <path d="M212 260 Q194 274 176 260 Q194 246 212 260" fill="#76b900" opacity="0.7"/>
+  <path d="M176 296 Q162 278 176 260 Q190 278 176 296" fill="#76b900" opacity="0.7"/>
+  <path d="M140 260 Q158 246 176 260 Q158 274 140 260" fill="#76b900" opacity="0.7"/>
+  <!-- Fan right -->
+  <circle cx="336" cy="260" r="52" fill="#0d0d0d" stroke="#333" stroke-width="2"/>
+  <circle cx="336" cy="260" r="36" fill="#161616"/>
+  <circle cx="336" cy="260" r="10" fill="#76b900"/>
+  <!-- Fan blades right -->
+  <path d="M336 224 Q350 242 336 260 Q322 242 336 224" fill="#76b900" opacity="0.7"/>
+  <path d="M372 260 Q354 274 336 260 Q354 246 372 260" fill="#76b900" opacity="0.7"/>
+  <path d="M336 296 Q322 278 336 260 Q350 278 336 296" fill="#76b900" opacity="0.7"/>
+  <path d="M300 260 Q318 246 336 260 Q318 274 300 260" fill="#76b900" opacity="0.7"/>
+  <!-- Ports -->
+  <rect x="80" y="350" width="352" height="24" rx="4" fill="#0d0d0d"/>
+  <rect x="100" y="355" width="40" height="14" rx="2" fill="#333"/>
+  <rect x="150" y="355" width="40" height="14" rx="2" fill="#333"/>
+  <rect x="200" y="355" width="40" height="14" rx="2" fill="#333"/>
+  <!-- NVIDIA green accent line -->
+  <rect x="80" y="176" width="352" height="4" rx="2" fill="#76b900"/>
+  <!-- Glow effect -->
+  <circle cx="256" cy="260" r="120" fill="none" stroke="#76b900" stroke-width="1" opacity="0.2"/>
+</svg>
