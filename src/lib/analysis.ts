@@ -44,8 +44,8 @@ export function computeMetricsFromAccumulator(acc: StatsAccumulator): {
   metrics: PerformanceMetrics;
   analysis: QAAnalysis;
 } {
-  const { n, sum, sumSq, minFt, maxFt, fpsHistogram, fpsHistBuckets, fpsBucketWidth,
-          stutterCount, avgDeviation, variance, highCount, medCount, avgFt, stdDev } = acc;
+  const { n, minFt, maxFt, fpsHistogram, fpsHistBuckets, fpsBucketWidth,
+          stutterCount, avgDeviation, variance, highCount, medCount, avgFt } = acc;
 
   const avgFps = 1000 / avgFt;
   const minFps = 1000 / maxFt;

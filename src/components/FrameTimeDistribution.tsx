@@ -68,7 +68,6 @@ const STUTTER_THRESHOLD_MS = 30;
 
 export default function FrameTimeDistribution({ driverKey, data }: Props) {
   const color = driverKey === 'A' ? '#76B900' : '#22d3ee';
-  const colorFaded = driverKey === 'A' ? 'rgba(118,185,0,0.7)' : 'rgba(34,211,238,0.7)';
   const labelClass = driverKey === 'A' ? 'text-nvidia-green' : 'text-cyan-400';
   const badgeClass =
     driverKey === 'A'
@@ -201,14 +200,21 @@ export default function FrameTimeDistribution({ driverKey, data }: Props) {
   );
 }
 
+interface DistributionTooltipProps {
+  active?: boolean;
+  payload?: { payload: Bucket }[];
+  driverKey: 'A' | 'B';
+  color: string;
+}
+
 function DistributionTooltip({
   active,
   payload,
   driverKey,
   color,
-}: any) {
+}: DistributionTooltipProps) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload as Bucket;
+  const d = payload[0].payload;
   return (
     <div className="rounded border border-nvidia-border bg-nvidia-panel px-3 py-2 shadow-lg">
       <div className="font-mono text-[10px] text-nvidia-muted">

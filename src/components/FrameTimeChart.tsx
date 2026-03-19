@@ -178,7 +178,16 @@ export function ComparisonChart({ dataA, dataB }: ComparisonChartProps) {
   );
 }
 
-function CustomTooltip({ active, payload }: any) {
+interface TooltipPayloadItem {
+  payload: FrameDataPoint & { driverA?: number; driverB?: number };
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+}
+
+function CustomTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
@@ -194,7 +203,7 @@ function CustomTooltip({ active, payload }: any) {
   );
 }
 
-function ComparisonTooltip({ active, payload }: any) {
+function ComparisonTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
