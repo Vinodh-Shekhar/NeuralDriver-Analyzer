@@ -54,6 +54,17 @@ export default function App() {
         const analysis = runQAAnalysis(dataset.rawFrameTimes);
         setAnalysis(analysis);
 
+        const meta = dataset.metadata;
+        const metaFields = meta
+          ? {
+              gpu_name: meta.gpu,
+              cpu_name: meta.cpu,
+              resolution: meta.resolution,
+              application: meta.application,
+              csv_source: meta.source,
+            }
+          : {};
+
         let currentSessionId = sessionId;
         if (!currentSessionId) {
           const { data } = await supabase
@@ -62,6 +73,7 @@ export default function App() {
               session_name: `Session ${new Date().toISOString()}`,
               driver_a_name: driver === 'A' ? file.name : '',
               driver_b_name: driver === 'B' ? file.name : '',
+              ...metaFields,
             })
             .select('id')
             .maybeSingle();
@@ -74,7 +86,7 @@ export default function App() {
             driver === 'A' ? { driver_a_name: file.name } : { driver_b_name: file.name };
           await supabase
             .from('telemetry_sessions')
-            .update(updateField)
+            .update({ ...updateField, ...metaFields })
             .eq('id', currentSessionId);
         }
 

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { Upload, FileText, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle2, AlertCircle, Cpu, Monitor } from 'lucide-react';
 import type { DriverDataset, UploadStatus } from '../types/telemetry';
 
 interface Props {
@@ -38,6 +38,7 @@ export default function DriverUploadPanel({
 
   const accentTextClass = driverKey === 'A' ? 'text-nvidia-green' : 'text-nvidia-accent';
   const accentTextDimClass = driverKey === 'A' ? 'text-nvidia-green/60' : 'text-nvidia-accent/60';
+  const meta = dataset?.metadata;
 
   return (
     <div className="group rounded-lg border border-nvidia-border bg-nvidia-panel p-4 transition-all hover:border-nvidia-green/30">
@@ -53,6 +54,11 @@ export default function DriverUploadPanel({
             {driverKey}
           </div>
           <span className="font-mono text-sm font-medium text-nvidia-text">{label}</span>
+          {meta && (
+            <span className="rounded bg-nvidia-green/10 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-wider text-nvidia-green">
+              FrameView
+            </span>
+          )}
         </div>
         {dataset && (
           <button
@@ -67,12 +73,42 @@ export default function DriverUploadPanel({
       {status === 'ready' && dataset ? (
         <div className="animate-fade-in space-y-2">
           <div className="flex items-center gap-2 rounded-md bg-nvidia-bg/60 px-3 py-2 ring-1 ring-nvidia-border">
-            <FileText className={`h-4 w-4 ${accentTextClass}`} />
+            <FileText className={`h-4 w-4 shrink-0 ${accentTextClass}`} />
             <span className="truncate font-mono text-xs text-nvidia-text">
               {dataset.fileName}
             </span>
             <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-nvidia-green" />
           </div>
+          {meta && (meta.gpu || meta.cpu) && (
+            <div className="space-y-1">
+              {meta.gpu && (
+                <div className="flex items-center gap-1.5 rounded bg-nvidia-bg/40 px-2 py-1 ring-1 ring-nvidia-border/50">
+                  <Monitor className="h-3 w-3 shrink-0 text-nvidia-green/70" />
+                  <span className="truncate font-mono text-[10px] text-nvidia-muted">
+                    {meta.gpu}
+                  </span>
+                  {meta.resolution && (
+                    <span className="ml-auto shrink-0 font-mono text-[10px] text-nvidia-muted/60">
+                      {meta.resolution}
+                    </span>
+                  )}
+                </div>
+              )}
+              {meta.cpu && (
+                <div className="flex items-center gap-1.5 rounded bg-nvidia-bg/40 px-2 py-1 ring-1 ring-nvidia-border/50">
+                  <Cpu className="h-3 w-3 shrink-0 text-nvidia-accent/70" />
+                  <span className="truncate font-mono text-[10px] text-nvidia-muted">
+                    {meta.cpu}
+                  </span>
+                </div>
+              )}
+              {meta.application && (
+                <div className="font-mono text-[10px] text-nvidia-muted/60 px-2">
+                  App: {meta.application}
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <MiniStat label="Frames" value={dataset.frames.length.toLocaleString()} />
             <MiniStat
@@ -122,7 +158,7 @@ export default function DriverUploadPanel({
                 Drop CSV or click to upload
               </span>
               <span className="mt-1 font-mono text-[10px] text-nvidia-muted/60">
-                Requires FrameTime column
+                FrameView, PresentMon, or custom CSV
               </span>
             </>
           )}

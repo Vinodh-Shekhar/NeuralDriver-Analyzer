@@ -4,11 +4,20 @@ export interface FrameDataPoint {
   fps: number;
 }
 
+export interface FrameViewMetadata {
+  application: string;
+  gpu: string;
+  cpu: string;
+  resolution: string;
+  source: 'frameview' | 'generic';
+}
+
 export interface DriverDataset {
   label: string;
   fileName: string;
   frames: FrameDataPoint[];
   rawFrameTimes: number[];
+  metadata?: FrameViewMetadata;
 }
 
 export interface PerformanceMetrics {
