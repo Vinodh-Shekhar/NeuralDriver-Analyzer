@@ -10,7 +10,7 @@ Supports native Nvidia FrameView CSV exports as well as generic frame time captu
 
 ## Performance Report
 
-![Performance Report](public/screenshots/performance-report.png)
+![Performance Report](public/screenshots/Performance-Report.png)
 
 ## Live Demo
 
@@ -163,48 +163,6 @@ Stores computed metrics and regression analysis for a session.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| UI Framework | React 18 + TypeScript |
-| Build Tool | Vite |
-| Styling | Tailwind CSS (custom NVIDIA-inspired theme) |
-| Charts | Recharts |
-| Icons | Lucide React |
-| Database | Supabase (PostgreSQL + RLS) |
-| CSV Parsing | Web Worker (streaming, handles large files) |
-
----
-
-## Running the App
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Create a `.env` file with your Supabase credentials:
-
-```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Build for production:
-
-```bash
-npm run build
-```
-
----
 
 ## Future Improvements
 
