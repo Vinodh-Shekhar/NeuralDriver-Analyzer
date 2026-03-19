@@ -103,9 +103,19 @@ export interface WorkerErrorMessage {
 
 export type WorkerOutMessage = WorkerProgressMessage | WorkerResultMessage | WorkerErrorMessage;
 
+function getReadableStream(file: File): ReadableStream<Uint8Array> {
+  const raw = file.stream() as ReadableStream<Uint8Array>;
+  if (file.name.endsWith('.gz')) {
+    const ds = new DecompressionStream('gzip');
+    return raw.pipeThrough(ds);
+  }
+  return raw;
+}
+
 async function parseFile(file: File, label: string) {
   const decoder = new TextDecoder('utf-8');
-  const reader = file.stream().getReader();
+  const stream = getReadableStream(file);
+  const reader = stream.getReader();
 
   let headerLine: string | null = null;
   let headers: string[] = [];
@@ -118,10 +128,6 @@ async function parseFile(file: File, label: string) {
   let n = 0;
   let minFt = Infinity;
   let maxFt = -Infinity;
-  let stutterCount = 0;
-  let deviationSum = 0;
-  let highCount = 0;
-  let medCount = 0;
 
   let wMean = 0;
   let wM2 = 0;
@@ -130,10 +136,14 @@ async function parseFile(file: File, label: string) {
   let sampleStep = 1;
   let nextSampleAt = 1;
 
-  let leftover = '';
+  let leftoverBytes = new Uint8Array(0);
   let bytesRead = 0;
   let lastProgressAt = 0;
   let rowCapReached = false;
+  let stutterCount = 0;
+  let deviationSum = 0;
+  let highCount = 0;
+  let medCount = 0;
 
   const processLine = (line: string): boolean => {
     if (line === '') return false;
@@ -161,10 +171,7 @@ async function parseFile(file: File, label: string) {
     if (isNaN(frameTime) || frameTime <= 0) return false;
 
     n++;
-
-    if (n > MAX_ROWS_TO_PARSE) {
-      return true;
-    }
+    if (n > MAX_ROWS_TO_PARSE) return true;
 
     const delta = frameTime - wMean;
     wMean += delta / n;
@@ -192,33 +199,49 @@ async function parseFile(file: File, label: string) {
     return false;
   };
 
+  const NEWLINE = 10;
+
   outer: while (true) {
     const { done, value } = await reader.read();
     if (done) break;
+
     bytesRead += value.byteLength;
-    const chunk = decoder.decode(value, { stream: true });
-    const combined = leftover + chunk;
-    const lines = combined.split('\n');
-    leftover = lines.pop() ?? '';
-    for (const line of lines) {
-      const capped = processLine(line.trim());
-      if (capped) {
-        rowCapReached = true;
-        break outer;
+
+    const combined = new Uint8Array(leftoverBytes.length + value.length);
+    combined.set(leftoverBytes);
+    combined.set(value, leftoverBytes.length);
+
+    let lineStart = 0;
+    for (let i = 0; i < combined.length; i++) {
+      if (combined[i] === NEWLINE) {
+        const lineBytes = combined.subarray(lineStart, i);
+        const line = decoder.decode(lineBytes).trim();
+        lineStart = i + 1;
+        const capped = processLine(line);
+        if (capped) {
+          rowCapReached = true;
+          break outer;
+        }
       }
     }
+
+    leftoverBytes = combined.subarray(lineStart);
+
     if (bytesRead - lastProgressAt > 100_000) {
       self.postMessage({ type: 'progress', frames: n, bytes: bytesRead, total: file.size } satisfies WorkerProgressMessage);
       lastProgressAt = bytesRead;
     }
   }
+
   reader.cancel().catch(() => {});
-  if (!rowCapReached && leftover.trim()) processLine(leftover.trim());
+
+  if (!rowCapReached && leftoverBytes.length > 0) {
+    processLine(decoder.decode(leftoverBytes).trim());
+  }
 
   if (n === 0) throw new Error('No valid frame time data found in CSV');
 
   const framesAnalyzed = Math.min(n, MAX_ROWS_TO_PARSE);
-
   const avgFt = wMean;
   const variance = framesAnalyzed > 1 ? wM2 / framesAnalyzed : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));

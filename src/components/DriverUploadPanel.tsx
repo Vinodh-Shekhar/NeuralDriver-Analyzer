@@ -41,7 +41,7 @@ export default function DriverUploadPanel({
     (e: React.DragEvent) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
-      if (file && file.name.endsWith('.csv')) {
+      if (file && (file.name.endsWith('.csv') || file.name.endsWith('.csv.gz') || file.name.endsWith('.gz'))) {
         validateAndSelect(file);
       }
     },
@@ -164,7 +164,7 @@ export default function DriverUploadPanel({
           <input
             ref={inputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.gz"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -214,7 +214,7 @@ export default function DriverUploadPanel({
                 FrameView, PresentMon, or custom CSV
               </span>
               <span className="mt-0.5 font-mono text-[10px] text-nvidia-muted/40">
-                Max {MAX_FILE_SIZE / 1024 / 1024}MB &mdash; first {MAX_ROWS_TO_PARSE.toLocaleString()} frames analyzed
+                .csv or .csv.gz &mdash; first {MAX_ROWS_TO_PARSE.toLocaleString()} frames analyzed
               </span>
             </>
           )}

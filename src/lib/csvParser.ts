@@ -18,9 +18,7 @@ const FPS_HIST_BUCKETS = 2_000;
 const FPS_HIST_MAX = 2000;
 const FPS_BUCKET_WIDTH = FPS_HIST_MAX / FPS_HIST_BUCKETS;
 
-const FILE_SIZE_STREAM_THRESHOLD = 2 * 1024 * 1024;
-
-export const MAX_FILE_SIZE = 25 * 1024 * 1024;
+export const MAX_FILE_SIZE = 200 * 1024 * 1024;
 
 function extractNthColumn(line: string, colIndex: number): string {
   let col = 0;
@@ -107,7 +105,7 @@ export async function parseCSVFile(
   onProgress?: ProgressCallback
 ): Promise<ParseResult> {
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(0)}MB). Maximum supported size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
+    throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(0)}MB). Maximum supported size is ${MAX_FILE_SIZE / 1024 / 1024}MB. Consider compressing to .csv.gz.`);
   }
 
   try {
@@ -117,13 +115,22 @@ export async function parseCSVFile(
   }
 }
 
+function getReadableStream(file: File): ReadableStream<Uint8Array> {
+  const raw = file.stream() as ReadableStream<Uint8Array>;
+  if (file.name.endsWith('.gz')) {
+    const ds = new DecompressionStream('gzip');
+    return raw.pipeThrough(ds);
+  }
+  return raw;
+}
+
 async function parseCSVFileStreaming(
   file: File,
   label: string,
   onProgress?: ProgressCallback
 ): Promise<ParseResult> {
   const decoder = new TextDecoder('utf-8');
-  const reader = file.stream().getReader();
+  const reader = getReadableStream(file).getReader();
 
   let headerLine: string | null = null;
   let headers: string[] = [];
@@ -148,10 +155,11 @@ async function parseCSVFileStreaming(
   let sampleStep = 1;
   let nextSampleAt = 1;
 
-  let leftover = '';
+  let leftoverBytes = new Uint8Array(0);
   let bytesRead = 0;
   let yieldCounter = 0;
   let rowCapReached = false;
+  const NEWLINE = 10;
 
   const processLine = (line: string): boolean => {
     if (line === '') return false;
@@ -214,18 +222,26 @@ async function parseCSVFileStreaming(
     const { done, value } = await reader.read();
     if (done) break;
     bytesRead += value.byteLength;
-    const chunk = decoder.decode(value, { stream: true });
-    const combined = leftover + chunk;
-    const lines = combined.split('\n');
-    leftover = lines.pop() ?? '';
-    for (const line of lines) {
-      const capped = processLine(line.trim());
-      if (capped) {
-        rowCapReached = true;
-        break outer;
+
+    const combined = new Uint8Array(leftoverBytes.length + value.length);
+    combined.set(leftoverBytes);
+    combined.set(value, leftoverBytes.length);
+
+    let lineStart = 0;
+    for (let i = 0; i < combined.length; i++) {
+      if (combined[i] === NEWLINE) {
+        const line = decoder.decode(combined.subarray(lineStart, i)).trim();
+        lineStart = i + 1;
+        const capped = processLine(line);
+        if (capped) {
+          rowCapReached = true;
+          break outer;
+        }
+        yieldCounter++;
       }
-      yieldCounter++;
     }
+    leftoverBytes = combined.subarray(lineStart);
+
     onProgress?.(n, bytesRead, file.size);
     if (yieldCounter >= YIELD_INTERVAL) {
       await yieldToMain();
@@ -233,7 +249,9 @@ async function parseCSVFileStreaming(
     }
   }
   reader.cancel().catch(() => {});
-  if (!rowCapReached && leftover.trim()) processLine(leftover.trim());
+  if (!rowCapReached && leftoverBytes.length > 0) {
+    processLine(decoder.decode(leftoverBytes).trim());
+  }
 
   if (n === 0) throw new Error('No valid frame time data found in CSV');
   const framesAnalyzed = Math.min(n, MAX_ROWS_TO_PARSE);
