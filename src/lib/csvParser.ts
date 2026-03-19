@@ -17,6 +17,8 @@ const FPS_HIST_BUCKETS = 200_000;
 const FPS_HIST_MAX = 2000;
 const FPS_BUCKET_WIDTH = FPS_HIST_MAX / FPS_HIST_BUCKETS;
 
+const FILE_SIZE_STREAM_THRESHOLD = 200 * 1024 * 1024;
+
 function detectFrameViewMetadata(
   headers: string[],
   firstDataRow: string[]
@@ -55,12 +57,200 @@ export interface ParseResult {
   analysis: QAAnalysis;
 }
 
-export async function parseCSVFile(file: File, label: string): Promise<ParseResult> {
+export type ProgressCallback = (framesProcessed: number, bytesProcessed: number, totalBytes: number) => void;
+
+export async function parseCSVFile(
+  file: File,
+  label: string,
+  onProgress?: ProgressCallback
+): Promise<ParseResult> {
+  if (file.size > FILE_SIZE_STREAM_THRESHOLD) {
+    return parseCSVFileStreaming(file, label, onProgress);
+  }
   const text = await readFileAsText(file);
-  return parseCSVText(text, label, file.name);
+  return parseCSVText(text, label, file.name, onProgress ? (frames) => onProgress(frames, file.size, file.size) : undefined);
 }
 
-export async function parseCSVText(csvText: string, label: string, fileName: string): Promise<ParseResult> {
+async function parseCSVFileStreaming(
+  file: File,
+  label: string,
+  onProgress?: ProgressCallback
+): Promise<ParseResult> {
+  const decoder = new TextDecoder('utf-8');
+  const reader = file.stream().getReader();
+
+  let headerLine: string | null = null;
+  let headers: string[] = [];
+  let frameTimeIndex = -1;
+  let metadata: FrameViewMetadata | undefined;
+  let firstDataRowParsed = false;
+
+  const frames: FrameDataPoint[] = [];
+  const fpsHistogram = new Int32Array(FPS_HIST_BUCKETS);
+
+  let n = 0;
+  let sum = 0;
+  let sumSq = 0;
+  let minFt = Infinity;
+  let maxFt = -Infinity;
+  let stutterCount = 0;
+  let deviationSum = 0;
+  let highCount = 0;
+  let medCount = 0;
+
+  let leftover = '';
+  let bytesRead = 0;
+  let yieldCounter = 0;
+
+  const processLine = (line: string, avgFt?: number, stdDev?: number) => {
+    if (line === '') return;
+
+    if (headerLine === null) {
+      headerLine = line;
+      headers = line.split(',').map(h => h.trim().toLowerCase());
+      frameTimeIndex = headers.findIndex(h => FRAME_TIME_HEADERS.includes(h));
+      if (frameTimeIndex === -1) {
+        throw new Error('CSV must contain a "FrameTime" or "MsBetweenPresents" column');
+      }
+      return;
+    }
+
+    const cols = line.split(',');
+    const raw = (cols[frameTimeIndex] ?? '').trim();
+    if (raw === '' || raw.toUpperCase() === 'NA') return;
+
+    const frameTime = parseFloat(raw);
+    if (isNaN(frameTime) || frameTime <= 0) return;
+
+    if (!firstDataRowParsed) {
+      metadata = detectFrameViewMetadata(headers, cols);
+      firstDataRowParsed = true;
+    }
+
+    if (avgFt === undefined) {
+      n++;
+      sum += frameTime;
+      sumSq += frameTime * frameTime;
+      if (frameTime < minFt) minFt = frameTime;
+      if (frameTime > maxFt) maxFt = frameTime;
+
+      const fps = 1000 / frameTime;
+      const bucketIdx = Math.min(Math.floor(fps / FPS_BUCKET_WIDTH), FPS_HIST_BUCKETS - 1);
+      fpsHistogram[bucketIdx]++;
+
+      if (n <= MAX_RENDER_FRAMES) {
+        frames.push({ frame: n, frameTime, fps });
+      }
+    } else {
+      deviationSum += Math.abs(frameTime - avgFt) / avgFt;
+      if (frameTime > avgFt * 1.5) stutterCount++;
+      if (stdDev && stdDev > 0) {
+        const zscore = Math.abs(frameTime - avgFt) / stdDev;
+        if (zscore > 3) highCount++;
+        else if (zscore > 2) medCount++;
+      }
+    }
+  };
+
+  const processChunk = (chunk: string, avgFt?: number, stdDev?: number) => {
+    const combined = leftover + chunk;
+    const lines = combined.split('\n');
+    leftover = lines.pop() ?? '';
+    for (const line of lines) {
+      processLine(line.trim(), avgFt, stdDev);
+      yieldCounter++;
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    bytesRead += value.byteLength;
+    const chunk = decoder.decode(value, { stream: true });
+    processChunk(chunk);
+    onProgress?.(n, bytesRead, file.size);
+    if (yieldCounter >= YIELD_INTERVAL) {
+      await yieldToMain();
+      yieldCounter = 0;
+    }
+  }
+  if (leftover.trim()) processLine(leftover.trim());
+
+  if (n === 0) throw new Error('No valid frame time data found in CSV');
+
+  const avgFt = sum / n;
+  const variance = sumSq / n - avgFt * avgFt;
+  const stdDev = Math.sqrt(Math.max(0, variance));
+
+  leftover = '';
+  yieldCounter = 0;
+  bytesRead = 0;
+  firstDataRowParsed = false;
+
+  const reader2 = file.stream().getReader();
+  let headerSkipped = false;
+
+  const processLine2 = (line: string) => {
+    if (line === '') return;
+    if (!headerSkipped) { headerSkipped = true; return; }
+    const cols = line.split(',');
+    const raw = (cols[frameTimeIndex] ?? '').trim();
+    if (raw === '' || raw.toUpperCase() === 'NA') return;
+    const frameTime = parseFloat(raw);
+    if (isNaN(frameTime) || frameTime <= 0) return;
+    deviationSum += Math.abs(frameTime - avgFt) / avgFt;
+    if (frameTime > avgFt * 1.5) stutterCount++;
+    if (stdDev > 0) {
+      const zscore = Math.abs(frameTime - avgFt) / stdDev;
+      if (zscore > 3) highCount++;
+      else if (zscore > 2) medCount++;
+    }
+    yieldCounter++;
+  };
+
+  while (true) {
+    const { done, value } = await reader2.read();
+    if (done) break;
+    bytesRead += value.byteLength;
+    const chunk = decoder.decode(value, { stream: true });
+    const combined = leftover + chunk;
+    const lines = combined.split('\n');
+    leftover = lines.pop() ?? '';
+    for (const line of lines) processLine2(line.trim());
+    if (yieldCounter >= YIELD_INTERVAL) {
+      await yieldToMain();
+      yieldCounter = 0;
+    }
+  }
+  if (leftover.trim()) processLine2(leftover.trim());
+
+  const avgDeviation = n > 0 ? deviationSum / n : 0;
+  const truncated = n > MAX_RENDER_FRAMES;
+
+  const dataset: DriverDataset = {
+    label,
+    fileName: file.name,
+    frames,
+    metadata,
+    truncated,
+    totalFrameCount: n,
+  };
+
+  const { metrics, analysis } = computeMetricsFromAccumulator({
+    n, sum, sumSq, minFt, maxFt,
+    fpsHistogram, fpsHistBuckets: FPS_HIST_BUCKETS, fpsBucketWidth: FPS_BUCKET_WIDTH,
+    stutterCount, avgDeviation, variance, highCount, medCount, avgFt, stdDev,
+  });
+
+  return { dataset, metrics, analysis };
+}
+
+export async function parseCSVText(
+  csvText: string,
+  label: string,
+  fileName: string,
+  onProgress?: (framesProcessed: number) => void
+): Promise<ParseResult> {
   const newlineIdx = csvText.indexOf('\n');
   if (newlineIdx === -1) {
     throw new Error('CSV file must contain a header row and at least one data row');
@@ -124,6 +314,7 @@ export async function parseCSVText(csvText: string, label: string, fileName: str
 
     rowIndex++;
     if (rowIndex % YIELD_INTERVAL === 0) {
+      onProgress?.(n);
       await yieldToMain();
     }
   }
@@ -172,6 +363,7 @@ export async function parseCSVText(csvText: string, label: string, fileName: str
 
     rowIndex2++;
     if (rowIndex2 % YIELD_INTERVAL === 0) {
+      onProgress?.(n);
       await yieldToMain();
     }
   }

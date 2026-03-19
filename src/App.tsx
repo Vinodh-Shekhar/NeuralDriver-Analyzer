@@ -12,7 +12,9 @@ import TelemetryWidgets from './components/TelemetryWidgets';
 import { parseCSVFile, MAX_RENDER_FRAMES } from './lib/csvParser';
 import { detectRegression } from './lib/analysis';
 import { generateSampleDatasets } from './lib/sampleData';
+import { generateReport } from './lib/reportGenerator';
 import { supabase } from './lib/supabase';
+import { Download } from 'lucide-react';
 import type {
   DriverDataset,
   PerformanceMetrics,
@@ -32,6 +34,8 @@ export default function App() {
   const [analysisB, setAnalysisB] = useState<QAAnalysis | null>(null);
   const [regression, setRegression] = useState<RegressionResult | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [progressA, setProgressA] = useState<{ frames: number; bytes: number; total: number } | null>(null);
+  const [progressB, setProgressB] = useState<{ frames: number; bytes: number; total: number } | null>(null);
 
   const processDriver = useCallback(
     async (
@@ -40,11 +44,22 @@ export default function App() {
       setStatus: (s: UploadStatus) => void,
       setDataset: (d: DriverDataset | null) => void,
       setMetrics: (m: PerformanceMetrics | null) => void,
-      setAnalysis: (a: QAAnalysis | null) => void
+      setAnalysis: (a: QAAnalysis | null) => void,
+      setProgress: (p: { frames: number; bytes: number; total: number } | null) => void
     ) => {
       try {
         setStatus('processing');
-        const { dataset, metrics, analysis } = await parseCSVFile(file, `Dataset ${driver}`);
+        setProgress({ frames: 0, bytes: 0, total: file.size });
+
+        const { dataset, metrics, analysis } = await parseCSVFile(
+          file,
+          `Dataset ${driver}`,
+          (frames, bytes, total) => {
+            setProgress({ frames, bytes, total });
+          }
+        );
+
+        setProgress(null);
         setDataset(dataset);
         setMetrics(metrics);
         setAnalysis(analysis);
@@ -113,6 +128,7 @@ export default function App() {
 
         return { metrics, analysis };
       } catch {
+        setProgress(null);
         setStatus('error');
         return null;
       }
@@ -128,7 +144,8 @@ export default function App() {
         setStatusA,
         setDatasetA,
         setMetricsA,
-        setAnalysisA
+        setAnalysisA,
+        setProgressA
       );
       if (result && metricsB) {
         setRegression(detectRegression(result.metrics, metricsB));
@@ -145,7 +162,8 @@ export default function App() {
         setStatusB,
         setDatasetB,
         setMetricsB,
-        setAnalysisB
+        setAnalysisB,
+        setProgressB
       );
       if (result && metricsA) {
         setRegression(detectRegression(metricsA, result.metrics));
@@ -159,6 +177,7 @@ export default function App() {
     setMetricsA(null);
     setAnalysisA(null);
     setStatusA('idle');
+    setProgressA(null);
     setRegression(null);
   }, []);
 
@@ -167,6 +186,7 @@ export default function App() {
     setMetricsB(null);
     setAnalysisB(null);
     setStatusB('idle');
+    setProgressB(null);
     setRegression(null);
   }, []);
 
@@ -185,6 +205,18 @@ export default function App() {
     setRegression(detectRegression(mA, mB));
   }, []);
 
+  const handleDownloadReport = useCallback(() => {
+    generateReport({
+      datasetA,
+      datasetB,
+      metricsA,
+      metricsB,
+      analysisA,
+      analysisB,
+      regression,
+    });
+  }, [datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression]);
+
   const hasData = !!datasetA || !!datasetB;
 
   return (
@@ -199,6 +231,7 @@ export default function App() {
               driverKey="A"
               status={statusA}
               dataset={datasetA}
+              progress={progressA}
               onFileSelect={handleFileA}
               onClear={clearA}
             />
@@ -207,6 +240,7 @@ export default function App() {
               driverKey="B"
               status={statusB}
               dataset={datasetB}
+              progress={progressB}
               onFileSelect={handleFileB}
               onClear={clearB}
             />
@@ -286,11 +320,22 @@ export default function App() {
                   Prototype by Vinodh Shekhar
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-nvidia-green animate-pulse-glow" />
-                <span className="font-mono text-[10px] text-nvidia-muted">
-                  AI Engine Active
-                </span>
+              <div className="flex items-center gap-3">
+                {hasData && (
+                  <button
+                    onClick={handleDownloadReport}
+                    className="flex items-center gap-1.5 rounded border border-nvidia-green/40 bg-nvidia-green/10 px-3 py-1.5 font-mono text-[11px] text-nvidia-green transition-all hover:bg-nvidia-green/20 hover:border-nvidia-green/60 active:scale-95"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download Report
+                  </button>
+                )}
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-nvidia-green animate-pulse-glow" />
+                  <span className="font-mono text-[10px] text-nvidia-muted">
+                    AI Engine Active
+                  </span>
+                </div>
               </div>
             </div>
           </footer>

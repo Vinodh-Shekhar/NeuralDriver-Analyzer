@@ -7,6 +7,7 @@ interface Props {
   driverKey: 'A' | 'B';
   status: UploadStatus;
   dataset: DriverDataset | null;
+  progress: { frames: number; bytes: number; total: number } | null;
   onFileSelect: (file: File) => void;
   onClear: () => void;
 }
@@ -16,6 +17,7 @@ export default function DriverUploadPanel({
   driverKey,
   status,
   dataset,
+  progress,
   onFileSelect,
   onClear,
 }: Props) {
@@ -38,7 +40,12 @@ export default function DriverUploadPanel({
 
   const accentTextClass = driverKey === 'A' ? 'text-nvidia-green' : 'text-nvidia-accent';
   const accentTextDimClass = driverKey === 'A' ? 'text-nvidia-green/60' : 'text-nvidia-accent/60';
+  const accentBarClass = driverKey === 'A' ? 'bg-nvidia-green' : 'bg-nvidia-accent';
   const meta = dataset?.metadata;
+
+  const pct = progress && progress.total > 0
+    ? Math.min(100, Math.round((progress.bytes / progress.total) * 100))
+    : 0;
 
   return (
     <div className="group rounded-lg border border-nvidia-border bg-nvidia-panel p-4 transition-all hover:border-nvidia-green/30">
@@ -110,7 +117,7 @@ export default function DriverUploadPanel({
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">
-            <MiniStat label="Frames" value={dataset.frames.length.toLocaleString()} />
+            <MiniStat label="Frames" value={dataset.totalFrameCount.toLocaleString()} />
             <MiniStat
               label="Avg FPS"
               value={(
@@ -123,10 +130,12 @@ export default function DriverUploadPanel({
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => status !== 'processing' && status !== 'uploading' && inputRef.current?.click()}
           className={`flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-4 py-6 transition-all ${
             status === 'error'
               ? 'border-nvidia-danger/50 bg-nvidia-danger/5'
+              : status === 'processing' || status === 'uploading'
+              ? 'cursor-default border-nvidia-border bg-nvidia-bg/30'
               : 'border-nvidia-border bg-nvidia-bg/30 hover:border-nvidia-green/40 hover:bg-nvidia-green/5'
           }`}
         >
@@ -141,10 +150,30 @@ export default function DriverUploadPanel({
             }}
           />
           {status === 'processing' || status === 'uploading' ? (
-            <>
-              <div className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-nvidia-green/30 border-t-nvidia-green" />
-              <span className="font-mono text-xs text-nvidia-muted">Processing telemetry data...</span>
-            </>
+            <div className="w-full space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-nvidia-green/30 border-t-nvidia-green" />
+                <span className="font-mono text-xs text-nvidia-muted">Analysing telemetry...</span>
+              </div>
+              {progress && (
+                <div className="space-y-1.5">
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-nvidia-border">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${accentBarClass}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] text-nvidia-muted">
+                      {progress.frames > 0 ? `${progress.frames.toLocaleString()} frames` : 'Reading file...'}
+                    </span>
+                    <span className="font-mono text-[10px] text-nvidia-muted">
+                      {pct}%
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : status === 'error' ? (
             <>
               <AlertCircle className="mb-2 h-6 w-6 text-nvidia-danger" />
