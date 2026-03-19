@@ -29,9 +29,15 @@ interface Bucket {
 function buildHistogram(data: FrameDataPoint[], binWidth: number): Bucket[] {
   if (data.length === 0) return [];
 
-  const frameTimes = data.map((d) => d.frameTime);
-  const min = Math.floor(Math.min(...frameTimes) / binWidth) * binWidth;
-  const max = Math.ceil(Math.max(...frameTimes) / binWidth) * binWidth;
+  let rawMin = Infinity;
+  let rawMax = -Infinity;
+  for (let i = 0; i < data.length; i++) {
+    const ft = data[i].frameTime;
+    if (ft < rawMin) rawMin = ft;
+    if (ft > rawMax) rawMax = ft;
+  }
+  const min = Math.floor(rawMin / binWidth) * binWidth;
+  const max = Math.ceil(rawMax / binWidth) * binWidth;
 
   const buckets: Bucket[] = [];
   for (let start = min; start < max; start += binWidth) {
@@ -45,7 +51,8 @@ function buildHistogram(data: FrameDataPoint[], binWidth: number): Bucket[] {
     });
   }
 
-  for (const ft of frameTimes) {
+  for (let i = 0; i < data.length; i++) {
+    const ft = data[i].frameTime;
     const idx = Math.min(
       Math.floor((ft - min) / binWidth),
       buckets.length - 1
@@ -70,15 +77,15 @@ export default function FrameTimeDistribution({ driverKey, data }: Props) {
 
   const buckets = useMemo(() => buildHistogram(data, 2), [data]);
 
-  const hasStutterSpikes = useMemo(
-    () => data.some((d) => d.frameTime > STUTTER_THRESHOLD_MS),
-    [data]
-  );
+  const stutterFrames = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].frameTime > STUTTER_THRESHOLD_MS) count++;
+    }
+    return count;
+  }, [data]);
 
-  const stutterFrames = useMemo(
-    () => data.filter((d) => d.frameTime > STUTTER_THRESHOLD_MS).length,
-    [data]
-  );
+  const hasStutterSpikes = stutterFrames > 0;
 
   return (
     <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-4 animate-fade-in">

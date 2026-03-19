@@ -1,157 +1,97 @@
 import type {
   PerformanceMetrics,
-  AnomalyResult,
   QAAnalysis,
   RegressionResult,
 } from '../types/telemetry';
 
-function mean(arr: number[]): number {
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
+export interface StatsAccumulator {
+  n: number;
+  sum: number;
+  sumSq: number;
+  minFt: number;
+  maxFt: number;
+  fpsHistogram: Int32Array;
+  fpsHistBuckets: number;
+  fpsBucketWidth: number;
+  stutterCount: number;
+  avgDeviation: number;
+  variance: number;
+  highCount: number;
+  medCount: number;
+  avgFt: number;
+  stdDev: number;
 }
 
-function variance(arr: number[]): number {
-  const m = mean(arr);
-  return arr.reduce((sum, v) => sum + (v - m) ** 2, 0) / arr.length;
-}
-
-function standardDeviation(arr: number[]): number {
-  return Math.sqrt(variance(arr));
-}
-
-function safeMin(arr: number[]): number {
-  let min = arr[0];
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] < min) min = arr[i];
-  }
-  return min;
-}
-
-function safeMax(arr: number[]): number {
-  let max = arr[0];
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] > max) max = arr[i];
-  }
-  return max;
-}
-
-export function calculateMetrics(frameTimes: number[]): PerformanceMetrics {
-  const fpsValues = frameTimes.map(ft => 1000 / ft);
-  const avgFps = mean(fpsValues);
-  const ftVariance = variance(frameTimes);
-  const avgFrameTime = mean(frameTimes);
-
-  const pacingDeviations = frameTimes.map(ft => Math.abs(ft - avgFrameTime) / avgFrameTime);
-  const avgDeviation = mean(pacingDeviations);
-  const framePacingStability = Math.max(0, Math.min(100, (1 - avgDeviation) * 100));
-
-  let stutterCount = 0;
-  for (let i = 1; i < frameTimes.length; i++) {
-    if (frameTimes[i] > avgFrameTime * 1.5) {
-      stutterCount++;
+function percentileFromHistogram(
+  histogram: Int32Array,
+  buckets: number,
+  bucketWidth: number,
+  totalCount: number,
+  pFraction: number
+): number {
+  const targetCount = Math.ceil(pFraction * totalCount);
+  let cumulative = 0;
+  for (let i = 0; i < buckets; i++) {
+    cumulative += histogram[i];
+    if (cumulative >= targetCount) {
+      return (i + 0.5) * bucketWidth;
     }
   }
-  const stutterScore = (stutterCount / frameTimes.length) * 100;
+  return buckets * bucketWidth;
+}
 
-  const sortedFps = [...fpsValues].sort((a, b) => a - b);
-  const p1Index = Math.ceil(0.01 * sortedFps.length) - 1;
-  const p01Index = Math.ceil(0.001 * sortedFps.length) - 1;
+export function computeMetricsFromAccumulator(acc: StatsAccumulator): {
+  metrics: PerformanceMetrics;
+  analysis: QAAnalysis;
+} {
+  const { n, sum, sumSq, minFt, maxFt, fpsHistogram, fpsHistBuckets, fpsBucketWidth,
+          stutterCount, avgDeviation, variance, highCount, medCount, avgFt, stdDev } = acc;
 
-  return {
+  const avgFps = 1000 / avgFt;
+  const minFps = 1000 / maxFt;
+  const maxFps = 1000 / minFt;
+  const framePacingStability = Math.max(0, Math.min(100, (1 - avgDeviation) * 100));
+  const stutterScore = (stutterCount / n) * 100;
+
+  const p1Low = percentileFromHistogram(fpsHistogram, fpsHistBuckets, fpsBucketWidth, n, 0.01);
+  const p01Low = percentileFromHistogram(fpsHistogram, fpsHistBuckets, fpsBucketWidth, n, 0.001);
+
+  const metrics: PerformanceMetrics = {
     averageFps: Math.round(avgFps * 100) / 100,
-    frameTimeVariance: Math.round(ftVariance * 1000) / 1000,
+    frameTimeVariance: Math.round(variance * 1000) / 1000,
     framePacingStability: Math.round(framePacingStability * 100) / 100,
     stutterScore: Math.round(stutterScore * 100) / 100,
-    minFps: Math.round(safeMin(fpsValues) * 100) / 100,
-    maxFps: Math.round(safeMax(fpsValues) * 100) / 100,
-    percentile1Low: Math.round(sortedFps[Math.max(0, p1Index)] * 100) / 100,
-    percentile01Low: Math.round(sortedFps[Math.max(0, p01Index)] * 100) / 100,
-    avgFrameTime: Math.round(avgFrameTime * 1000) / 1000,
+    minFps: Math.round(minFps * 100) / 100,
+    maxFps: Math.round(maxFps * 100) / 100,
+    percentile1Low: Math.round(p1Low * 100) / 100,
+    percentile01Low: Math.round(p01Low * 100) / 100,
+    avgFrameTime: Math.round(avgFt * 1000) / 1000,
   };
-}
-
-export function detectAnomalies(frameTimes: number[]): AnomalyResult[] {
-  const anomalies: AnomalyResult[] = [];
-  const avg = mean(frameTimes);
-  const stdDev = standardDeviation(frameTimes);
-  const globalVar = variance(frameTimes);
-
-  const windowSize = 10;
-
-  for (let i = 0; i < frameTimes.length; i++) {
-    const ft = frameTimes[i];
-    const deviation = Math.abs(ft - avg) / stdDev;
-
-    if (deviation > 3) {
-      anomalies.push({
-        frameIndex: i,
-        frameTime: ft,
-        expectedFrameTime: avg,
-        severity: 'high',
-        type: ft > avg ? 'spike' : 'drop',
-      });
-    } else if (deviation > 2) {
-      anomalies.push({
-        frameIndex: i,
-        frameTime: ft,
-        expectedFrameTime: avg,
-        severity: 'medium',
-        type: ft > avg ? 'spike' : 'drop',
-      });
-    }
-
-    if (i >= windowSize) {
-      const window = frameTimes.slice(i - windowSize, i);
-      const windowVar = variance(window);
-      if (windowVar > globalVar * 2.5) {
-        const existing = anomalies.find(a => a.frameIndex === i);
-        if (!existing) {
-          anomalies.push({
-            frameIndex: i,
-            frameTime: ft,
-            expectedFrameTime: avg,
-            severity: 'low',
-            type: 'instability',
-          });
-        }
-      }
-    }
-  }
-
-  return anomalies;
-}
-
-export function runQAAnalysis(frameTimes: number[]): QAAnalysis {
-  const anomalies = detectAnomalies(frameTimes);
-  const metrics = calculateMetrics(frameTimes);
 
   const instabilityWarnings: string[] = [];
 
-  const highAnomalies = anomalies.filter(a => a.severity === 'high').length;
-  const medAnomalies = anomalies.filter(a => a.severity === 'medium').length;
-  const totalFrames = frameTimes.length;
-
-  if (highAnomalies > totalFrames * 0.02) {
+  if (highCount > n * 0.02) {
     instabilityWarnings.push(
-      `High spike rate: ${highAnomalies} severe frame spikes detected (${((highAnomalies / totalFrames) * 100).toFixed(1)}%)`
+      `High spike rate: ${highCount} severe frame spikes detected (${((highCount / n) * 100).toFixed(1)}%)`
     );
   }
 
-  if (metrics.framePacingStability < 85) {
+  if (framePacingStability < 85) {
     instabilityWarnings.push(
-      `Frame pacing instability: stability score ${metrics.framePacingStability.toFixed(1)}% is below threshold`
+      `Frame pacing instability: stability score ${framePacingStability.toFixed(1)}% is below threshold`
     );
   }
 
-  if (metrics.stutterScore > 5) {
+  if (stutterScore > 5) {
     instabilityWarnings.push(
-      `Elevated stutter: ${metrics.stutterScore.toFixed(1)}% of frames exceed 1.5x average frame time`
+      `Elevated stutter: ${stutterScore.toFixed(1)}% of frames exceed 1.5x average frame time`
     );
   }
 
-  const p1Ratio = metrics.percentile1Low / metrics.averageFps;
+  const p1Ratio = p1Low / avgFps;
   if (p1Ratio < 0.5) {
     instabilityWarnings.push(
-      `1% low FPS (${metrics.percentile1Low.toFixed(1)}) is significantly below average (${metrics.averageFps.toFixed(1)})`
+      `1% low FPS (${p1Low.toFixed(1)}) is significantly below average (${avgFps.toFixed(1)})`
     );
   }
 
@@ -159,31 +99,34 @@ export function runQAAnalysis(frameTimes: number[]): QAAnalysis {
   let overallScore: number;
 
   if (
-    highAnomalies > totalFrames * 0.05 ||
-    metrics.framePacingStability < 70 ||
-    metrics.stutterScore > 10
+    highCount > n * 0.05 ||
+    framePacingStability < 70 ||
+    stutterScore > 10
   ) {
     stabilityRating = 'FAIL';
-    overallScore = Math.max(0, 40 - highAnomalies);
+    overallScore = Math.max(0, 40 - highCount);
   } else if (
-    highAnomalies > totalFrames * 0.01 ||
-    medAnomalies > totalFrames * 0.05 ||
-    metrics.framePacingStability < 85 ||
-    metrics.stutterScore > 3
+    highCount > n * 0.01 ||
+    medCount > n * 0.05 ||
+    framePacingStability < 85 ||
+    stutterScore > 3
   ) {
     stabilityRating = 'WARNING';
-    overallScore = Math.max(40, 75 - highAnomalies - medAnomalies * 0.5);
+    overallScore = Math.max(40, 75 - highCount - medCount * 0.5);
   } else {
     stabilityRating = 'PASS';
-    overallScore = Math.min(100, 90 + metrics.framePacingStability * 0.1);
+    overallScore = Math.min(100, 90 + framePacingStability * 0.1);
   }
 
-  return {
-    anomalies,
+  const analysis: QAAnalysis = {
+    anomalyCounts: { high: highCount, medium: medCount, low: Math.max(0, n - highCount - medCount) },
     instabilityWarnings,
     stabilityRating,
     overallScore: Math.round(overallScore),
+    totalFrames: n,
   };
+
+  return { metrics, analysis };
 }
 
 export function detectRegression(

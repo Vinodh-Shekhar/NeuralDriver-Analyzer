@@ -9,8 +9,8 @@ import FrameTimeDistribution from './components/FrameTimeDistribution';
 import QAAnalysisPanel from './components/QAAnalysisPanel';
 import RegressionPanel from './components/RegressionPanel';
 import TelemetryWidgets from './components/TelemetryWidgets';
-import { parseCSV, readFileAsText, MAX_RENDER_FRAMES } from './lib/csvParser';
-import { calculateMetrics, runQAAnalysis, detectRegression } from './lib/analysis';
+import { parseCSVFile, MAX_RENDER_FRAMES } from './lib/csvParser';
+import { detectRegression } from './lib/analysis';
 import { generateSampleDatasets } from './lib/sampleData';
 import { supabase } from './lib/supabase';
 import type {
@@ -44,14 +44,9 @@ export default function App() {
     ) => {
       try {
         setStatus('processing');
-        const text = await readFileAsText(file);
-        const dataset = await parseCSV(text, `Dataset ${driver}`, file.name);
+        const { dataset, metrics, analysis } = await parseCSVFile(file, `Dataset ${driver}`);
         setDataset(dataset);
-
-        const metrics = calculateMetrics(dataset.rawFrameTimes);
         setMetrics(metrics);
-
-        const analysis = runQAAnalysis(dataset.rawFrameTimes);
         setAnalysis(analysis);
 
         const meta = dataset.metadata;
@@ -176,20 +171,17 @@ export default function App() {
   }, []);
 
   const handleGenerateSample = useCallback(() => {
-    const { datasetA: sampleA, datasetB: sampleB } = generateSampleDatasets();
+    const { datasetA: sampleA, datasetB: sampleB, metricsA: mA, metricsB: mB, analysisA: aA, analysisB: aB } = generateSampleDatasets();
 
     setDatasetA(sampleA);
     setDatasetB(sampleB);
     setStatusA('ready');
     setStatusB('ready');
 
-    const mA = calculateMetrics(sampleA.rawFrameTimes);
-    const mB = calculateMetrics(sampleB.rawFrameTimes);
     setMetricsA(mA);
     setMetricsB(mB);
-
-    setAnalysisA(runQAAnalysis(sampleA.rawFrameTimes));
-    setAnalysisB(runQAAnalysis(sampleB.rawFrameTimes));
+    setAnalysisA(aA);
+    setAnalysisB(aB);
     setRegression(detectRegression(mA, mB));
   }, []);
 
@@ -201,7 +193,6 @@ export default function App() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* Top Row: Upload + GPU Status */}
           <div className="grid gap-4 lg:grid-cols-3">
             <DriverUploadPanel
               label="Dataset A"
@@ -224,22 +215,20 @@ export default function App() {
 
           {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
 
-          {/* Truncation notice for large datasets */}
           {((datasetA?.truncated) || (datasetB?.truncated)) && (
             <div className="rounded-lg border border-nvidia-warning/30 bg-nvidia-warning/5 px-4 py-3 flex items-start gap-3">
               <div className="h-2 w-2 mt-1.5 shrink-0 rounded-full bg-nvidia-warning" />
               <p className="font-mono text-xs text-nvidia-warning leading-relaxed">
                 Large dataset detected. Statistics are computed from all {
                   Math.max(
-                    datasetA?.rawFrameTimes.length ?? 0,
-                    datasetB?.rawFrameTimes.length ?? 0
+                    datasetA?.totalFrameCount ?? 0,
+                    datasetB?.totalFrameCount ?? 0
                   ).toLocaleString()
                 } frames. Chart rendering uses a representative sample of up to {MAX_RENDER_FRAMES.toLocaleString()} frames.
               </p>
             </div>
           )}
 
-          {/* Telemetry Score Widgets */}
           {hasData && (
             <TelemetryWidgets
               metricsA={metricsA}
@@ -249,7 +238,6 @@ export default function App() {
             />
           )}
 
-          {/* Middle Row: Performance Metrics */}
           {hasData && (
             <div className="grid gap-4 lg:grid-cols-2">
               <MetricsPanel driverKey="A" metrics={metricsA} />
@@ -257,10 +245,8 @@ export default function App() {
             </div>
           )}
 
-          {/* Regression Detection */}
           {regression && <RegressionPanel result={regression} />}
 
-          {/* Lower Row: Frame Time Charts */}
           {(datasetA || datasetB) && (
             <div className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-2">
@@ -286,12 +272,10 @@ export default function App() {
             </div>
           )}
 
-          {/* Bottom Row: AI QA Analysis */}
           {hasData && (
             <QAAnalysisPanel analysisA={analysisA} analysisB={analysisB} />
           )}
 
-          {/* Footer */}
           <footer className="border-t border-nvidia-border pt-4 pb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

@@ -16,9 +16,9 @@ export interface DriverDataset {
   label: string;
   fileName: string;
   frames: FrameDataPoint[];
-  rawFrameTimes: number[];
   metadata?: FrameViewMetadata;
   truncated?: boolean;
+  totalFrameCount: number;
 }
 
 export interface PerformanceMetrics {
@@ -33,19 +33,13 @@ export interface PerformanceMetrics {
   avgFrameTime: number;
 }
 
-export interface AnomalyResult {
-  frameIndex: number;
-  frameTime: number;
-  expectedFrameTime: number;
-  severity: 'low' | 'medium' | 'high';
-  type: 'spike' | 'drop' | 'instability';
-}
 
 export interface QAAnalysis {
-  anomalies: AnomalyResult[];
+  anomalyCounts: { high: number; medium: number; low: number };
   instabilityWarnings: string[];
   stabilityRating: 'PASS' | 'WARNING' | 'FAIL';
   overallScore: number;
+  totalFrames: number;
 }
 
 export interface RegressionResult {

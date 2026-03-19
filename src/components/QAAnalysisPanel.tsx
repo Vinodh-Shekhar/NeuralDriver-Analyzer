@@ -109,17 +109,17 @@ function DriverAnalysis({
         <div className="grid grid-cols-3 gap-2">
           <AnomalyCount
             label="High"
-            count={analysis.anomalies.filter((a) => a.severity === 'high').length}
+            count={analysis.anomalyCounts.high}
             color="text-nvidia-danger"
           />
           <AnomalyCount
             label="Medium"
-            count={analysis.anomalies.filter((a) => a.severity === 'medium').length}
+            count={analysis.anomalyCounts.medium}
             color="text-nvidia-warning"
           />
           <AnomalyCount
             label="Low"
-            count={analysis.anomalies.filter((a) => a.severity === 'low').length}
+            count={analysis.anomalyCounts.low}
             color="text-nvidia-muted"
           />
         </div>
