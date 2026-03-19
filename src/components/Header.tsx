@@ -66,7 +66,7 @@ export default function Header() {
                 <span className="text-nvidia-green">Analyzer</span>
               </h1>
               <p className="mt-0.5 text-xs tracking-wide text-nvidia-muted sm:text-sm">
-                Hardware Performance Benchmarking &amp; Telemetry Analysis
+                Performance Benchmarking &amp; Telemetry Analysis
               </p>
             </div>
           </div>
