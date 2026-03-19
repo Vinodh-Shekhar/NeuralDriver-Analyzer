@@ -34,7 +34,7 @@ export function SingleFrameTimeChart({ driverKey, data }: SingleChartProps) {
           {driverKey}
         </div>
         <span className="font-mono text-xs font-medium text-nvidia-text">
-          Driver {driverKey} Frame Time
+          Dataset {driverKey} Frame Time
         </span>
         <span className="ml-auto font-mono text-[10px] text-nvidia-muted">
           {data.length} frames
@@ -119,11 +119,11 @@ export function ComparisonChart({ dataA, dataB }: ComparisonChartProps) {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <div className="h-0.5 w-4 rounded bg-nvidia-green" />
-            <span className="font-mono text-[10px] text-nvidia-muted">Driver A</span>
+            <span className="font-mono text-[10px] text-nvidia-muted">Dataset A</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-0.5 w-4 rounded bg-nvidia-accent" />
-            <span className="font-mono text-[10px] text-nvidia-muted">Driver B</span>
+            <span className="font-mono text-[10px] text-nvidia-muted">Dataset B</span>
           </div>
           <span className="font-mono text-[10px] text-nvidia-muted">
             {maxLen} frames

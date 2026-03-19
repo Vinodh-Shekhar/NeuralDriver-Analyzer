@@ -25,7 +25,7 @@ export default function RegressionPanel({ result }: Props) {
           <TrendingUp className="h-4 w-4 text-nvidia-green" />
         )}
         <span className="font-mono text-sm font-medium text-nvidia-text">
-          Driver Regression Detection
+          Performance Regression Detection
         </span>
       </div>
 
@@ -49,8 +49,8 @@ export default function RegressionPanel({ result }: Props) {
               }`}
             >
               {result.isRegressed
-                ? 'Driver Performance Regression Detected'
-                : 'Driver Performance Stable'}
+                ? 'Performance Regression Detected'
+                : 'Performance Stable'}
             </div>
             <div className="mt-0.5 font-mono text-[11px] text-nvidia-muted">
               {result.summary}

@@ -36,7 +36,7 @@ export default function TelemetryWidgets({
       />
       <ScoreWidget
         icon={<Award className="h-5 w-5" />}
-        label="Driver Reliability"
+        label="Benchmark Reliability"
         score={reliability.score}
         rating={reliability.rating}
         color={reliability.color}

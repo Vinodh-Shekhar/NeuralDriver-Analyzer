@@ -8,6 +8,9 @@ const FRAME_TIME_HEADERS = [
   'msbetweendisplaychange',
 ];
 
+const CHUNK_SIZE = 5000;
+export const MAX_RENDER_FRAMES = 100_000;
+
 function detectFrameViewMetadata(
   headers: string[],
   firstDataRow: string[]
@@ -36,7 +39,11 @@ function detectFrameViewMetadata(
   };
 }
 
-export function parseCSV(csvText: string, label: string, fileName: string): DriverDataset {
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+export async function parseCSV(csvText: string, label: string, fileName: string): Promise<DriverDataset> {
   const lines = csvText.trim().split('\n');
   if (lines.length < 2) {
     throw new Error('CSV file must contain a header row and at least one data row');
@@ -56,28 +63,40 @@ export function parseCSV(csvText: string, label: string, fileName: string): Driv
 
   const rawFrameTimes: number[] = [];
   const frames: FrameDataPoint[] = [];
+  const totalDataLines = lines.length - 1;
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',');
-    const raw = (cols[frameTimeIndex] ?? '').trim();
-    if (raw === '' || raw.toUpperCase() === 'NA') continue;
+  for (let chunkStart = 0; chunkStart < totalDataLines; chunkStart += CHUNK_SIZE) {
+    const chunkEnd = Math.min(chunkStart + CHUNK_SIZE, totalDataLines);
 
-    const frameTime = parseFloat(raw);
-    if (isNaN(frameTime) || frameTime <= 0) continue;
+    for (let i = chunkStart; i < chunkEnd; i++) {
+      const cols = lines[i + 1].split(',');
+      const raw = (cols[frameTimeIndex] ?? '').trim();
+      if (raw === '' || raw.toUpperCase() === 'NA') continue;
 
-    rawFrameTimes.push(frameTime);
-    frames.push({
-      frame: rawFrameTimes.length,
-      frameTime,
-      fps: 1000 / frameTime,
-    });
+      const frameTime = parseFloat(raw);
+      if (isNaN(frameTime) || frameTime <= 0) continue;
+
+      rawFrameTimes.push(frameTime);
+
+      if (rawFrameTimes.length <= MAX_RENDER_FRAMES) {
+        frames.push({
+          frame: rawFrameTimes.length,
+          frameTime,
+          fps: 1000 / frameTime,
+        });
+      }
+    }
+
+    await yieldToMain();
   }
 
-  if (frames.length === 0) {
+  if (rawFrameTimes.length === 0) {
     throw new Error('No valid frame time data found in CSV');
   }
 
-  return { label, fileName, frames, rawFrameTimes, metadata };
+  const truncated = rawFrameTimes.length > MAX_RENDER_FRAMES;
+
+  return { label, fileName, frames, rawFrameTimes, metadata, truncated };
 }
 
 export function readFileAsText(file: File): Promise<string> {

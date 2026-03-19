@@ -9,7 +9,7 @@ import FrameTimeDistribution from './components/FrameTimeDistribution';
 import QAAnalysisPanel from './components/QAAnalysisPanel';
 import RegressionPanel from './components/RegressionPanel';
 import TelemetryWidgets from './components/TelemetryWidgets';
-import { parseCSV, readFileAsText } from './lib/csvParser';
+import { parseCSV, readFileAsText, MAX_RENDER_FRAMES } from './lib/csvParser';
 import { calculateMetrics, runQAAnalysis, detectRegression } from './lib/analysis';
 import { generateSampleDatasets } from './lib/sampleData';
 import { supabase } from './lib/supabase';
@@ -45,7 +45,7 @@ export default function App() {
       try {
         setStatus('processing');
         const text = await readFileAsText(file);
-        const dataset = parseCSV(text, `Driver ${driver}`, file.name);
+        const dataset = await parseCSV(text, `Dataset ${driver}`, file.name);
         setDataset(dataset);
 
         const metrics = calculateMetrics(dataset.rawFrameTimes);
@@ -91,8 +91,18 @@ export default function App() {
         }
 
         if (currentSessionId) {
+          const DB_FRAME_CAP = 10_000;
           const batchSize = 500;
-          const rows = dataset.frames.map((f) => ({
+          const framesToStore = dataset.frames.length > DB_FRAME_CAP
+            ? (() => {
+                const step = dataset.frames.length / DB_FRAME_CAP;
+                return Array.from({ length: DB_FRAME_CAP }, (_, i) =>
+                  dataset.frames[Math.floor(i * step)]
+                );
+              })()
+            : dataset.frames;
+
+          const rows = framesToStore.map((f) => ({
             session_id: currentSessionId,
             driver_label: driver,
             frame_number: f.frame,
@@ -194,7 +204,7 @@ export default function App() {
           {/* Top Row: Upload + GPU Status */}
           <div className="grid gap-4 lg:grid-cols-3">
             <DriverUploadPanel
-              label="Driver A Dataset"
+              label="Dataset A"
               driverKey="A"
               status={statusA}
               dataset={datasetA}
@@ -202,7 +212,7 @@ export default function App() {
               onClear={clearA}
             />
             <DriverUploadPanel
-              label="Driver B Dataset"
+              label="Dataset B"
               driverKey="B"
               status={statusB}
               dataset={datasetB}
@@ -213,6 +223,21 @@ export default function App() {
           </div>
 
           {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
+
+          {/* Truncation notice for large datasets */}
+          {((datasetA?.truncated) || (datasetB?.truncated)) && (
+            <div className="rounded-lg border border-nvidia-warning/30 bg-nvidia-warning/5 px-4 py-3 flex items-start gap-3">
+              <div className="h-2 w-2 mt-1.5 shrink-0 rounded-full bg-nvidia-warning" />
+              <p className="font-mono text-xs text-nvidia-warning leading-relaxed">
+                Large dataset detected. Statistics are computed from all {
+                  Math.max(
+                    datasetA?.rawFrameTimes.length ?? 0,
+                    datasetB?.rawFrameTimes.length ?? 0
+                  ).toLocaleString()
+                } frames. Chart rendering uses a representative sample of up to {MAX_RENDER_FRAMES.toLocaleString()} frames.
+              </p>
+            </div>
+          )}
 
           {/* Telemetry Score Widgets */}
           {hasData && (
@@ -271,7 +296,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-[10px] text-nvidia-muted">
-                  NeuralDriver Performance Analyzer v1.0.0
+                  FrameBench Analyzer v1.0.0
                 </span>
                 <span className="text-[10px] text-gray-600">
                   Prototype by Vinodh Shekhar

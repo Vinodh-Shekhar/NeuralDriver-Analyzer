@@ -18,6 +18,22 @@ function standardDeviation(arr: number[]): number {
   return Math.sqrt(variance(arr));
 }
 
+function safeMin(arr: number[]): number {
+  let min = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] < min) min = arr[i];
+  }
+  return min;
+}
+
+function safeMax(arr: number[]): number {
+  let max = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] > max) max = arr[i];
+  }
+  return max;
+}
+
 export function calculateMetrics(frameTimes: number[]): PerformanceMetrics {
   const fpsValues = frameTimes.map(ft => 1000 / ft);
   const avgFps = mean(fpsValues);
@@ -45,8 +61,8 @@ export function calculateMetrics(frameTimes: number[]): PerformanceMetrics {
     frameTimeVariance: Math.round(ftVariance * 1000) / 1000,
     framePacingStability: Math.round(framePacingStability * 100) / 100,
     stutterScore: Math.round(stutterScore * 100) / 100,
-    minFps: Math.round(Math.min(...fpsValues) * 100) / 100,
-    maxFps: Math.round(Math.max(...fpsValues) * 100) / 100,
+    minFps: Math.round(safeMin(fpsValues) * 100) / 100,
+    maxFps: Math.round(safeMax(fpsValues) * 100) / 100,
     percentile1Low: Math.round(sortedFps[Math.max(0, p1Index)] * 100) / 100,
     percentile01Low: Math.round(sortedFps[Math.max(0, p01Index)] * 100) / 100,
     avgFrameTime: Math.round(avgFrameTime * 1000) / 1000,
@@ -57,6 +73,7 @@ export function detectAnomalies(frameTimes: number[]): AnomalyResult[] {
   const anomalies: AnomalyResult[] = [];
   const avg = mean(frameTimes);
   const stdDev = standardDeviation(frameTimes);
+  const globalVar = variance(frameTimes);
 
   const windowSize = 10;
 
@@ -85,7 +102,6 @@ export function detectAnomalies(frameTimes: number[]): AnomalyResult[] {
     if (i >= windowSize) {
       const window = frameTimes.slice(i - windowSize, i);
       const windowVar = variance(window);
-      const globalVar = variance(frameTimes);
       if (windowVar > globalVar * 2.5) {
         const existing = anomalies.find(a => a.frameIndex === i);
         if (!existing) {

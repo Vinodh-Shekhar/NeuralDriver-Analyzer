@@ -18,6 +18,7 @@ export interface DriverDataset {
   frames: FrameDataPoint[];
   rawFrameTimes: number[];
   metadata?: FrameViewMetadata;
+  truncated?: boolean;
 }
 
 export interface PerformanceMetrics {

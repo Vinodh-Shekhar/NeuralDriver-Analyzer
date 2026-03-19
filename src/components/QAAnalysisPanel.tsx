@@ -19,7 +19,7 @@ export default function QAAnalysisPanel({ analysisA, analysisB }: Props) {
       {!analysisA && !analysisB ? (
         <div className="flex h-32 items-center justify-center rounded-md border border-dashed border-nvidia-border bg-nvidia-bg/20">
           <span className="font-mono text-xs text-nvidia-muted">
-            Upload telemetry data to run AI analysis
+            Upload benchmark data to run analysis
           </span>
         </div>
       ) : (
@@ -74,7 +74,7 @@ function DriverAnalysis({
         >
           {driverKey}
         </div>
-        <span className="font-mono text-xs text-nvidia-text">Driver {driverKey} Analysis</span>
+        <span className="font-mono text-xs text-nvidia-text">Dataset {driverKey} Analysis</span>
       </div>
 
       <div className={`rounded-md border ${cfg.border} ${cfg.bg} px-3 py-3`}>
@@ -86,7 +86,7 @@ function DriverAnalysis({
                 {analysis.stabilityRating}
               </div>
               <div className="font-mono text-[10px] text-nvidia-muted">
-                Driver Stability Rating
+                Stability Rating
               </div>
             </div>
           </div>

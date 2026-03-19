@@ -89,7 +89,7 @@ export default function FrameTimeDistribution({ driverKey, data }: Props) {
           {driverKey}
         </div>
         <span className="font-mono text-xs font-medium text-nvidia-text">
-          Driver {driverKey} Frame Time Distribution
+          Dataset {driverKey} Frame Time Distribution
         </span>
         <span className="ml-auto font-mono text-[10px] text-nvidia-muted">
           {data.length} frames
@@ -173,7 +173,7 @@ export default function FrameTimeDistribution({ driverKey, data }: Props) {
         <div className="flex items-center gap-1.5">
           <div className="h-2.5 w-2.5 rounded-sm" style={{ background: color }} />
           <span className={`font-mono text-[10px] ${labelClass}`}>
-            Driver {driverKey}
+            Dataset {driverKey}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -205,7 +205,7 @@ function DistributionTooltip({
   return (
     <div className="rounded border border-nvidia-border bg-nvidia-panel px-3 py-2 shadow-lg">
       <div className="font-mono text-[10px] text-nvidia-muted">
-        Driver {driverKey}
+        Dataset {driverKey}
       </div>
       <div className="font-mono text-xs" style={{ color }}>
         {d.rangeMin.toFixed(1)} - {d.rangeMax.toFixed(1)} ms

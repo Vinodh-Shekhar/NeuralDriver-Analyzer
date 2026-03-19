@@ -22,7 +22,7 @@ export default function MetricsPanel({ driverKey, metrics }: Props) {
           {driverKey}
         </div>
         <span className="font-mono text-sm font-medium text-nvidia-text">
-          Driver {driverKey} Performance
+          Dataset {driverKey} Performance
         </span>
       </div>
 
@@ -78,7 +78,7 @@ export default function MetricsPanel({ driverKey, metrics }: Props) {
       ) : (
         <div className="flex h-32 items-center justify-center rounded-md border border-dashed border-nvidia-border bg-nvidia-bg/20">
           <span className="font-mono text-xs text-nvidia-muted">
-            Upload Driver {driverKey} data to view metrics
+            Upload Dataset {driverKey} to view metrics
           </span>
         </div>
       )}
