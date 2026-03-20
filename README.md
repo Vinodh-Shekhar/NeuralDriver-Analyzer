@@ -104,8 +104,8 @@ Compressed `.csv.gz` files are supported in addition to plain `.csv`.
 
 1. Run a gameplay benchmark and capture frame times using Nvidia FrameView (or any compatible tool)
 2. Export the capture as a CSV file
-3. Open FrameBench Analyzer and upload the CSV for Driver A — hardware metadata is auto-detected from FrameView exports
-4. Upload a second CSV for Driver B from a different driver build
+3. Open FrameBench Analyzer and upload the CSV - hardware metadata is auto-detected from FrameView exports
+4. Upload a second CSV for comparison 
 5. FrameBench Analyzer computes metrics, runs QA analysis, and produces a regression verdict
 6. Download the HTML report or save the session to the database for future reference
 7. Use the demo mode to explore the full workflow without uploading files
@@ -178,7 +178,7 @@ Planned upgrades include:
 
 ## Inspiration
 
-This project was created as a prototype for GPU driver QA pipelines used in graphics driver validation labs.
+This project was created as a tool for hardware perfomance analysis, GPU driver QA pipelines used in graphics driver validation labs.
 
 ---
 
