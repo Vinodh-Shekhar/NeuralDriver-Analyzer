@@ -9,6 +9,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-electron
 *.local
 
 .vscode/*
@@ -21,3 +22,18 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Scaffolding tool leftovers (bolt.new, Supabase — not used in this project)
+.bolt/
+supabase/
+
+# Claude Code local settings and session data
+.claude/
+
+# Playwright MCP test artefacts
+.playwright-mcp/
+test-*.png
