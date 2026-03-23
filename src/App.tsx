@@ -335,7 +335,7 @@ export default function App() {
                   FrameBench Analyzer{appVersion ? ` v${appVersion}` : ''}
                 </span>
                 <span className="text-[10px] text-gray-600">
-                  Prototype by Vinodh Shekhar
+                  Prototype by Vinodh Shekhar and Karan Balaji
                 </span>
               </div>
               <div className="flex items-center gap-3">
