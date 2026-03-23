@@ -59,6 +59,7 @@ Tauri dev mode (`npm run tauri:dev`) and release builds (`npm run tauri:build`) 
 ## Tauri Configuration Rules
 
 - Do NOT add `"icon"` to `app.windows[0]` — it is not in the Tauri v2 schema and will be removed by the validator. The tray icon is set via `tauri::include_image!` in Rust (see above).
+- `webviewInstallMode` **must be `"skip"`** — do NOT use `"downloadBootstrapper"`. The bootstrapper makes the app download WebView2 from Microsoft's CDN at startup; on machines with firewalls, proxies, or slow connections this blocks the UI thread causing "not responding". All Windows 10 1803+ and Windows 11 machines already have WebView2 pre-installed via Edge — no download is needed.
 - Always add new Tauri plugins to both `Cargo.toml` **and** `capabilities/default.json` — missing permissions silently fail in release.
 - CSP is currently `null` (disabled). Keep it that way unless adding web content from external origins.
 
