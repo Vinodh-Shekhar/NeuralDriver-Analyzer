@@ -27,12 +27,20 @@ export default function App() {
   const [updateInfo, setUpdateInfo] = useState<{ version: string; update: { downloadAndInstall: () => Promise<void> } } | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [updateInstalling, setUpdateInstalling] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>('');
 
   const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
   useEffect(() => {
     if (!isTauri) return;
     (async () => {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const info = await invoke<{ version: string }>('get_app_info');
+        setAppVersion(info.version);
+      } catch {
+        // fallback: leave empty
+      }
       try {
         const { check } = await import('@tauri-apps/plugin-updater');
         const update = await check();
@@ -324,7 +332,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-[10px] text-nvidia-muted">
-                  FrameBench Analyzer v1.0.0
+                  FrameBench Analyzer{appVersion ? ` v${appVersion}` : ''}
                 </span>
                 <span className="text-[10px] text-gray-600">
                   Prototype by Vinodh Shekhar

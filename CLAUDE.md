@@ -121,6 +121,12 @@ Before any `tauri build`, verify:
 - Static CRT linking is configured in `src-tauri/.cargo/config.toml` — do not remove it. Without it, the release binary requires `vcruntime140.dll` to be installed on the target machine, which may be absent on clean Windows installs.
 - `webviewInstallMode` must be `"embedBootstrapper"` — do NOT use `"downloadBootstrapper"` or `"skip"`. `embedBootstrapper` bundles the small WebView2 bootstrapper (~1.7 MB) inside the NSIS setup.exe and installs it at setup time (not at app launch). `downloadBootstrapper` causes "not responding" because it downloads at app launch time, blocking the UI thread. `skip` leaves users with no WebView2 and a blank window if they're on an older Windows 10 without Edge.
 
+## Versioning Rules
+
+- **Never hardcode the version string in UI.** The footer and any other UI version display must read it dynamically via `invoke('get_app_info')` (returns `{ version: string }`), stored in React state. The command reads `CARGO_PKG_VERSION` at compile time, which Tauri syncs from `tauri.conf.json`.
+- **When bumping a version for release**, update the version field in **both** `src-tauri/tauri.conf.json` and `package.json` — they must always match.
+- **Tagging for release**: after bumping version and committing, push a `v*` tag (e.g. `git tag v1.0.2 && git push origin main v1.0.2`). This triggers the GitHub Actions release workflow (`.github/workflows/release.yml`) which builds, signs, and creates a draft GitHub Release with `latest.json`. Publish the draft on GitHub to make the update visible to running instances.
+
 ## Git Commit Rules
 
 - **Do NOT add `Co-Authored-By: Claude` or any AI attribution** to commit messages. Keep commits clean with just the change description.
