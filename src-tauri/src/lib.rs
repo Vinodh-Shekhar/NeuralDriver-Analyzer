@@ -59,61 +59,59 @@ pub fn run() {
 
             tauri::async_runtime::spawn(async move {
                 loop {
-                    // Run nvidia-smi in a blocking thread so we don't stall the async runtime
-                    let buf_clone = buf.clone();
-                    let tray_clone = tray_for_task.clone();
-                    tauri::async_runtime::spawn_blocking(move || {
-                        use std::process::Command as SysCommand;
-                        use std::time::{SystemTime, UNIX_EPOCH};
+                    use tokio::process::Command as TokioCommand;
+                    use std::time::{SystemTime, UNIX_EPOCH};
 
-                        let result = SysCommand::new("nvidia-smi")
+                    // 2-second timeout prevents nvidia-smi hangs from starving the thread pool
+                    let result = tokio::time::timeout(
+                        std::time::Duration::from_secs(2),
+                        TokioCommand::new("nvidia-smi")
                             .args([
                                 "--query-gpu=temperature.gpu,power.draw,clocks.current.graphics,utilization.gpu",
                                 "--format=csv,noheader,nounits",
                             ])
-                            .output();
+                            .output(),
+                    )
+                    .await;
 
-                        if let Ok(o) = result {
-                            if o.status.success() {
-                                let stdout = String::from_utf8_lossy(&o.stdout);
-                                let line = stdout.lines().next().unwrap_or("").trim();
-                                let parts: Vec<&str> =
-                                    line.split(',').map(|s| s.trim()).collect();
-                                if parts.len() >= 4 {
-                                    let temp: f32 = parts[0].parse().unwrap_or(0.0);
-                                    let power: f32 = parts[1].parse().unwrap_or(0.0);
-                                    let core_clk: u32 = parts[2].parse().unwrap_or(0);
-                                    let util: u32 = parts[3].parse().unwrap_or(0);
-                                    let ts = SystemTime::now()
-                                        .duration_since(UNIX_EPOCH)
-                                        .unwrap_or_default()
-                                        .as_secs();
+                    if let Ok(Ok(o)) = result {
+                        if o.status.success() {
+                            let stdout = String::from_utf8_lossy(&o.stdout);
+                            let line = stdout.lines().next().unwrap_or("").trim();
+                            let parts: Vec<&str> =
+                                line.split(',').map(|s| s.trim()).collect();
+                            if parts.len() >= 4 {
+                                let temp: f32 = parts[0].parse().unwrap_or(0.0);
+                                let power: f32 = parts[1].parse().unwrap_or(0.0);
+                                let core_clk: u32 = parts[2].parse().unwrap_or(0);
+                                let util: u32 = parts[3].parse().unwrap_or(0);
+                                let ts = SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .unwrap_or_default()
+                                    .as_secs();
 
-                                    let snapshot = GpuSnapshot {
-                                        timestamp_secs: ts,
-                                        temperature: temp,
-                                        power_draw: power,
-                                        core_clock_mhz: core_clk,
-                                        gpu_utilization: util,
-                                    };
+                                let snapshot = GpuSnapshot {
+                                    timestamp_secs: ts,
+                                    temperature: temp,
+                                    power_draw: power,
+                                    core_clock_mhz: core_clk,
+                                    gpu_utilization: util,
+                                };
 
-                                    let mut guard = buf_clone.lock().unwrap();
-                                    if guard.len() >= 120 {
-                                        guard.pop_front();
-                                    }
-                                    guard.push_back(snapshot);
-
-                                    // Update tray tooltip with live GPU temp
-                                    let _ = tray_clone.set_tooltip(Some(&format!(
-                                        "FrameBench Analyzer | GPU {}°C  {}W",
-                                        temp as u32, power as u32
-                                    )));
+                                let mut guard = buf.lock().unwrap();
+                                if guard.len() >= 120 {
+                                    guard.pop_front();
                                 }
+                                guard.push_back(snapshot);
+
+                                // Update tray tooltip with live GPU temp
+                                let _ = tray_for_task.set_tooltip(Some(&format!(
+                                    "FrameBench Analyzer | GPU {}°C  {}W",
+                                    temp as u32, power as u32
+                                )));
                             }
                         }
-                    })
-                    .await
-                    .ok();
+                    }
 
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 }
