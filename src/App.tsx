@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
 import GpuStatusWidget from './components/GpuStatusWidget';
@@ -24,6 +24,38 @@ import type {
 } from './types/telemetry';
 
 export default function App() {
+  const [updateInfo, setUpdateInfo] = useState<{ version: string; update: { downloadAndInstall: () => Promise<void> } } | null>(null);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
+  const [updateInstalling, setUpdateInstalling] = useState(false);
+
+  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+  useEffect(() => {
+    if (!isTauri) return;
+    (async () => {
+      try {
+        const { check } = await import('@tauri-apps/plugin-updater');
+        const update = await check();
+        if (update?.available) {
+          setUpdateInfo({ version: update.version, update });
+        }
+      } catch {
+        // Update check failed silently (offline, no release yet, etc.)
+      }
+    })();
+  }, [isTauri]);
+
+  const handleInstallUpdate = useCallback(async () => {
+    if (!updateInfo) return;
+    setUpdateInstalling(true);
+    try {
+      await updateInfo.update.downloadAndInstall();
+      // NSIS installer handles process lifecycle on Windows (closes app, installs, relaunches)
+    } catch {
+      setUpdateInstalling(false);
+    }
+  }, [updateInfo]);
+
   const [statusA, setStatusA] = useState<UploadStatus>('idle');
   const [statusB, setStatusB] = useState<UploadStatus>('idle');
   const [datasetA, setDatasetA] = useState<DriverDataset | null>(null);
@@ -154,8 +186,6 @@ export default function App() {
     setRegression(detectRegression(mA, mB));
   }, []);
 
-  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-
   const handleDownloadReport = useCallback(async () => {
     const reportInput = { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression };
     if (isTauri) {
@@ -174,6 +204,32 @@ export default function App() {
   return (
     <div className="min-h-screen bg-nvidia-bg">
       <Header />
+
+      {updateInfo && !updateDismissed && (
+        <div className="flex items-center justify-between border-b border-nvidia-green/30 bg-nvidia-green/10 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-nvidia-green animate-pulse" />
+            <span className="font-mono text-xs text-nvidia-green">
+              Update v{updateInfo.version} available
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleInstallUpdate}
+              disabled={updateInstalling}
+              className="rounded border border-nvidia-green/50 bg-nvidia-green/20 px-3 py-1 font-mono text-[11px] text-nvidia-green transition-all hover:bg-nvidia-green/30 active:scale-95 disabled:opacity-50"
+            >
+              {updateInstalling ? 'Installing...' : 'Update'}
+            </button>
+            <button
+              onClick={() => setUpdateDismissed(true)}
+              className="font-mono text-[11px] text-nvidia-muted hover:text-nvidia-green transition-colors"
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-6">

@@ -26,6 +26,14 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM0MDdGNjI5MjEwMzVEQUMKUldTc1hRTWhLZllITkFEVldqcDFrV25Bd2trcDdLYndwN01NcmdMd2VTa003RFYrWVMrODRGazMK",
+      "endpoints": [
+        "https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": ["nsis"],
