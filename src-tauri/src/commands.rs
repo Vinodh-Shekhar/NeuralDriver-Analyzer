@@ -1,4 +1,3 @@
-use std::process::Command as SysCommand;
 // HISTORY_DISABLED:
 // use std::collections::VecDeque;
 // use std::sync::{Arc, Mutex};
@@ -20,17 +19,23 @@ pub struct GpuStats {
 
 /// Query NVIDIA GPU stats via nvidia-smi.
 /// Returns a GpuStats with available=false if nvidia-smi is not present or fails.
+/// Uses a 2-second timeout to prevent nvidia-smi hangs from blocking the thread pool.
 #[tauri::command]
-pub fn get_gpu_stats() -> GpuStats {
-    let result = SysCommand::new("nvidia-smi")
-        .args([
-            "--query-gpu=name,temperature.gpu,power.draw,memory.used,memory.total,fan.speed,utilization.gpu,clocks.current.graphics,clocks.current.memory,pstate",
-            "--format=csv,noheader,nounits",
-        ])
-        .output();
+pub async fn get_gpu_stats() -> GpuStats {
+    use tokio::process::Command as TokioCommand;
+    let result = tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        TokioCommand::new("nvidia-smi")
+            .args([
+                "--query-gpu=name,temperature.gpu,power.draw,memory.used,memory.total,fan.speed,utilization.gpu,clocks.current.graphics,clocks.current.memory,pstate",
+                "--format=csv,noheader,nounits",
+            ])
+            .output(),
+    )
+    .await;
 
     let output = match result {
-        Ok(o) if o.status.success() => o,
+        Ok(Ok(o)) if o.status.success() => o,
         _ => return unavailable_stats(),
     };
 
