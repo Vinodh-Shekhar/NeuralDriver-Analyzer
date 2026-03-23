@@ -1,4 +1,3 @@
-/* GPU_TELEMETRY_DISABLED — uncomment to re-enable GPU telemetry commands
 use std::process::Command as SysCommand;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -92,7 +91,6 @@ pub struct GpuHistoryState(pub Arc<Mutex<VecDeque<GpuSnapshot>>>);
 pub fn get_gpu_history(state: tauri::State<GpuHistoryState>) -> Vec<GpuSnapshot> {
     state.0.lock().unwrap().iter().cloned().collect()
 }
-*/ // end GPU_TELEMETRY_DISABLED
 
 /// Save an HTML report to a user-chosen path via native Save As dialog.
 #[tauri::command]
@@ -117,7 +115,6 @@ pub async fn save_report(app: tauri::AppHandle, html: String) -> Result<String, 
     }
 }
 
-/* PHASE2_DISABLED — uncomment to re-enable toast notifications
 /// Show a native Windows toast notification.
 #[tauri::command]
 pub fn show_notification(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
@@ -129,7 +126,6 @@ pub fn show_notification(app: tauri::AppHandle, title: String, body: String) -> 
         .show()
         .map_err(|e| e.to_string())
 }
-*/ // end PHASE2_DISABLED
 
 #[derive(serde::Serialize)]
 pub struct AppInfo {

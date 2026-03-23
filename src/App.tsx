@@ -1,9 +1,8 @@
 import { useState, useCallback } from 'react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
-// GPU_TELEMETRY_DISABLED:
-// import GpuStatusWidget from './components/GpuStatusWidget';
-// import GpuTelemetryChart from './components/GpuTelemetryChart';
+import GpuStatusWidget from './components/GpuStatusWidget';
+import GpuTelemetryChart from './components/GpuTelemetryChart';
 import DemoCTA from './components/DemoCTA';
 import MetricsPanel from './components/MetricsPanel';
 import { SingleFrameTimeChart, ComparisonChart } from './components/FrameTimeChart';
@@ -90,11 +89,10 @@ export default function App() {
       if (result && metricsB) {
         const reg = detectRegression(result.metrics, metricsB);
         setRegression(reg);
-        // PHASE2_DISABLED: toast notification on regression
-        // if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-        //   const { invoke } = await import('@tauri-apps/api/core');
-        //   invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
-        // }
+        if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+          const { invoke } = await import('@tauri-apps/api/core');
+          invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
+        }
       }
     },
     [processDriver, metricsB]
@@ -114,11 +112,10 @@ export default function App() {
       if (result && metricsA) {
         const reg = detectRegression(metricsA, result.metrics);
         setRegression(reg);
-        // PHASE2_DISABLED: toast notification on regression
-        // if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-        //   const { invoke } = await import('@tauri-apps/api/core');
-        //   invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
-        // }
+        if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+          const { invoke } = await import('@tauri-apps/api/core');
+          invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
+        }
       }
     },
     [processDriver, metricsA]
@@ -199,10 +196,10 @@ export default function App() {
               onFileSelect={handleFileB}
               onClear={clearB}
             />
-            {/* <GpuStatusWidget hasData={hasData} /> GPU_TELEMETRY_DISABLED */}
+            <GpuStatusWidget hasData={hasData} />
           </div>
 
-          {/* {isTauri && <GpuTelemetryChart />} GPU_TELEMETRY_DISABLED */}
+          {isTauri && <GpuTelemetryChart />}
 
           {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
 

@@ -1,8 +1,7 @@
 mod commands;
 pub use commands::*;
-// GPU_TELEMETRY_DISABLED:
-// use std::collections::VecDeque;
-// use std::sync::{Arc, Mutex};
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -48,9 +47,6 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            app.manage(tray); // keep tray alive
-
-            /* GPU_TELEMETRY_DISABLED — comment back in to re-enable GPU polling
             // ── GPU history polling ───────────────────────────────────────
             // Register the history buffer as managed state first
             let buf: Arc<Mutex<VecDeque<GpuSnapshot>>> =
@@ -59,6 +55,7 @@ pub fn run() {
 
             // Clone tray handle so the polling task can update the tooltip
             let tray_for_task = tray.clone();
+            app.manage(tray); // keep tray alive
 
             tauri::async_runtime::spawn(async move {
                 loop {
@@ -121,19 +118,18 @@ pub fn run() {
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 }
             });
-            */ // end GPU_TELEMETRY_DISABLED
 
             Ok(())
         })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        // .plugin(tauri_plugin_notification::init()) // PHASE2_DISABLED
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
-            // commands::get_gpu_stats,  // GPU_TELEMETRY_DISABLED
+            commands::get_gpu_stats,
             commands::get_app_info,
             commands::save_report,
-            // commands::get_gpu_history, // GPU_TELEMETRY_DISABLED
-            // commands::show_notification // PHASE2_DISABLED
+            commands::get_gpu_history,
+            commands::show_notification
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
