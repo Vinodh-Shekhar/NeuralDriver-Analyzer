@@ -23,14 +23,18 @@ pub struct GpuStats {
 #[tauri::command]
 pub async fn get_gpu_stats() -> GpuStats {
     use tokio::process::Command as TokioCommand;
+    let mut cmd = TokioCommand::new("nvidia-smi");
+    cmd.args([
+        "--query-gpu=name,temperature.gpu,power.draw,memory.used,memory.total,fan.speed,utilization.gpu,clocks.current.graphics,clocks.current.memory,pstate",
+        "--format=csv,noheader,nounits",
+    ]);
+    // Suppress the console window flash on Windows when spawning nvidia-smi
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+
     let result = tokio::time::timeout(
         std::time::Duration::from_secs(2),
-        TokioCommand::new("nvidia-smi")
-            .args([
-                "--query-gpu=name,temperature.gpu,power.draw,memory.used,memory.total,fan.speed,utilization.gpu,clocks.current.graphics,clocks.current.memory,pstate",
-                "--format=csv,noheader,nounits",
-            ])
-            .output(),
+        cmd.output(),
     )
     .await;
 
