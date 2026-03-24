@@ -2,7 +2,7 @@
 
 ## Project
 
-Tauri v2 desktop app (Windows) for comparing NVIDIA GPU driver performance via frame-time CSV data. React + TypeScript frontend, Rust backend.
+Tauri v2 desktop app (Windows) for comparing NVIDIA GPU driver performance via frame-time CSV data. React + TypeScript frontend, Rust backend. Includes a separate landing page (`landing-page/`) deployed to GitHub Pages.
 
 Key files:
 - `src-tauri/src/lib.rs` — app setup, system tray, GPU polling loop
@@ -10,6 +10,9 @@ Key files:
 - `src-tauri/tauri.conf.json` — Tauri configuration
 - `src/App.tsx` — main React component, file upload + analysis orchestration
 - `src/lib/` — CSV parsing, analysis engine, report generation
+- `landing-page/src/` — marketing landing page (React + Vite, separate app)
+- `.github/workflows/release.yml` — release CI: builds, signs, publishes GitHub Release on `v*` tags
+- `.github/workflows/main.yml` — CI: lint + typecheck + Vite build on every push/PR
 
 ---
 
@@ -59,7 +62,7 @@ Tauri dev mode (`npm run tauri:dev`) and release builds (`npm run tauri:build`) 
 ## Tauri Configuration Rules
 
 - Do NOT add `"icon"` to `app.windows[0]` — it is not in the Tauri v2 schema and will be removed by the validator. The tray icon is set via `tauri::include_image!` in Rust (see above).
-- `webviewInstallMode` **must be `"skip"`** — do NOT use `"downloadBootstrapper"`. The bootstrapper makes the app download WebView2 from Microsoft's CDN at startup; on machines with firewalls, proxies, or slow connections this blocks the UI thread causing "not responding". All Windows 10 1803+ and Windows 11 machines already have WebView2 pre-installed via Edge — no download is needed.
+- `webviewInstallMode` **must be `"embedBootstrapper"`** — do NOT use `"downloadBootstrapper"` or `"skip"`. See Windows Release Requirements below.
 - Always add new Tauri plugins to both `Cargo.toml` **and** `capabilities/default.json` — missing permissions silently fail in release.
 - CSP is currently `null` (disabled). Keep it that way unless adding web content from external origins.
 
@@ -118,20 +121,74 @@ Before any `tauri build`, verify:
 - **No external CDN font imports** (`@import url('https://fonts.googleapis.com/...')`) — WebView2 blocks rendering until the CDN responds; on machines with firewalls or no internet this causes "not responding". Always self-host fonts via `@fontsource/<font-name>` and import the weight CSS files in `src/main.tsx`.
 - **No external URLs in `index.html` meta tags** — they fire network requests on every launch and expose scaffolding tool origins (bolt.new, etc.)
 
+---
+
 ## Windows Release Requirements
 
 - Static CRT linking is configured in `src-tauri/.cargo/config.toml` — do not remove it. Without it, the release binary requires `vcruntime140.dll` to be installed on the target machine, which may be absent on clean Windows installs.
 - `webviewInstallMode` must be `"embedBootstrapper"` — do NOT use `"downloadBootstrapper"` or `"skip"`. `embedBootstrapper` bundles the small WebView2 bootstrapper (~1.7 MB) inside the NSIS setup.exe and installs it at setup time (not at app launch). `downloadBootstrapper` causes "not responding" because it downloads at app launch time, blocking the UI thread. `skip` leaves users with no WebView2 and a blank window if they're on an older Windows 10 without Edge.
 
+---
+
+## Auto-Update System
+
+The app uses `tauri-plugin-updater` to check for updates on launch and show a non-blocking banner.
+
+**How it works:**
+1. On startup, the app calls `check()` from `@tauri-apps/plugin-updater` (behind the `isTauri` guard)
+2. It checks `.../releases/latest/download/latest.json` on GitHub for a newer version
+3. If found, a green banner appears: "Update vX.Y.Z available [Update] [Later]"
+4. Clicking "Update" calls `update.downloadAndInstall()` — the NSIS installer handles the process lifecycle
+
+**Key files:**
+- `src-tauri/tauri.conf.json` — `plugins.updater` section with `pubkey` and `endpoints`
+- `src-tauri/capabilities/default.json` — must include `"updater:default"`
+- `src-tauri/src/lib.rs` — `.plugin(tauri_plugin_updater::Builder::new().build())`
+- `src/App.tsx` — `useEffect` on mount checks for updates, `updateInfo` state drives the banner
+
+**Signing:** The private key is stored as GitHub secret `TAURI_SIGNING_PRIVATE_KEY`. The public key is in `tauri.conf.json` as `plugins.updater.pubkey`. Never hardcode or commit the private key.
+
+---
+
+## Release Workflow
+
+Releasing a new version is fully automated via `.github/workflows/release.yml`. It triggers on any `v*` tag push.
+
+**What the workflow does:**
+1. Builds the Tauri app (`npm run tauri:build`) with signing env vars
+2. Generates `latest.json` (PowerShell) — the update manifest the running app checks
+3. Copies the versioned NSIS installer to a **fixed filename** `FrameBench-Analyzer-Setup.exe`
+4. Creates a draft GitHub Release with all artifacts: `FrameBench-Analyzer-Setup.exe`, `.nsis.zip`, `.nsis.zip.sig`, `latest.json`
+
+**Fixed download filename — do not change:** The installer is always uploaded as `FrameBench-Analyzer-Setup.exe`. The landing page download buttons hardlink to:
+`https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe`
+If you rename this file in the workflow, you must update all landing page download hrefs to match.
+
+---
+
 ## Versioning Rules
 
 - **Never hardcode the version string in UI.** The footer and any other UI version display must read it dynamically via `invoke('get_app_info')` (returns `{ version: string }`), stored in React state. The command reads `CARGO_PKG_VERSION` at compile time, which Tauri syncs from `tauri.conf.json`.
-- **When bumping a version for release**, update the version field in **all three**: `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml` — they must always match. `Cargo.toml` is the source for `CARGO_PKG_VERSION` which `get_app_info` returns at runtime; forgetting it causes the UI to show the old version.
-- **Tagging does NOT auto-bump the version.** The git tag only triggers CI to build and publish. You must manually update all three files first, then commit, then tag. The correct release flow is:
-  1. Update `version` in `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml` to the new version (e.g. `1.0.4`)
+- **When bumping a version for release**, update the version field in **all three**: `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml` — they must always match.
+- **The correct release flow:**
+  1. Update `version` in `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml`
   2. Commit the version bump
-  3. `git tag v1.0.4 && git push origin main v1.0.4`
-  4. CI builds and creates a draft GitHub Release — publish it to make the update visible to running instances.
+  3. `git tag vX.Y.Z && git push origin main vX.Y.Z`
+  4. GitHub Actions builds, signs, and creates a draft release — go to GitHub Releases and publish the draft
+  5. Running app instances will detect the update on next launch
+
+---
+
+## Landing Page Rules
+
+The landing page (`landing-page/`) is a separate Vite + React app deployed to GitHub Pages.
+
+- All external links (GitHub, releases) must use `target="_blank" rel="noopener noreferrer"` — use the `Button` component's `target` and `rel` props
+- Internal links to the analyzer web app must use **relative paths** (`analyzer/`) not absolute (`/analyzer/`) — absolute paths break on GitHub Pages which serves from a base path
+- Do NOT add placeholder `href="#"` links — only link to pages/resources that actually exist
+- Footer columns only contain: Resources (Release Notes → GitHub releases, README), Community (GitHub, Issues), Legal (License)
+
+---
 
 ## Git Commit Rules
 
