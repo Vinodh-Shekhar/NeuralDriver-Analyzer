@@ -46,18 +46,20 @@ export default function Hero() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button 
-                variant="primary" 
-                size="lg" 
+              <Button
+                variant="primary"
+                size="lg"
                 href="https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <Download size={18} />
                 Download Setup
               </Button>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 size="lg"
-                href="/analyzer/"
+                href="analyzer/"
               >
                 <Play size={18} />
                 Launch Web App

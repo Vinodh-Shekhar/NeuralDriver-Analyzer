@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-nvidia-bg text-nvidia-text antialiased;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #3a3a3a;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4a;
+  }
+
+  ::selection {
+    background: rgba(118, 185, 0, 0.3);
+    color: #e6e6e6;
+  }
+}
+
+@layer utilities {
+  .glow-green {
+    box-shadow: 0 0 12px rgba(118, 185, 0, 0.3), 0 0 4px rgba(118, 185, 0, 0.2);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 12px rgba(0, 255, 156, 0.3), 0 0 4px rgba(0, 255, 156, 0.2);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 12px rgba(255, 77, 77, 0.3), 0 0 4px rgba(255, 77, 77, 0.2);
+  }
+
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(118, 185, 0, 0.5);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 8px rgba(0, 255, 156, 0.5);
+  }
+
+  .shimmer-btn {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(118, 185, 0, 0.12),
+      transparent
+    );
+    animation: shimmer-sweep 2.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-sweep {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+  }
+
+  .glass {
+    @apply backdrop-blur-sm bg-nvidia-panel/40;
+    border: 1px solid rgba(118, 185, 0, 0.1);
+  }
+
+  .glow-border {
+    border: 1px solid rgba(118, 185, 0, 0.2);
+    box-shadow: inset 0 0 20px rgba(118, 185, 0, 0.05);
+  }
+}
