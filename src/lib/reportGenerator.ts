@@ -13,6 +13,7 @@ interface ReportInput {
   analysisA: QAAnalysis | null;
   analysisB: QAAnalysis | null;
   regression: RegressionResult | null;
+  version?: string;
 }
 
 function fmtVal(v: number | undefined, decimals = 2): string {
@@ -40,7 +41,8 @@ function warningList(warnings: string[]): string {
 }
 
 export function buildReportHtml(input: ReportInput): string {
-  const { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression } = input;
+  const { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression, version } = input;
+  const versionStr = version ? `v${version}` : 'v1.0.0';
   const ts = new Date().toLocaleString();
 
   const metaA = datasetA?.metadata;
@@ -149,7 +151,7 @@ export function buildReportHtml(input: ReportInput): string {
 
 <div class="header">
   <h1>FrameBench Analyzer — Performance Report</h1>
-  <div class="subtitle">Generated: ${ts} &nbsp;|&nbsp; FrameBench Analyzer v1.0.0</div>
+  <div class="subtitle">Generated: ${ts} &nbsp;|&nbsp; FrameBench Analyzer ${versionStr}</div>
 </div>
 
 ${(metaA || metaB) ? `
@@ -268,7 +270,7 @@ ${regression ? `
 </div>` : ''}
 
 <div class="footer">
-  <span>FrameBench Analyzer v1.0.0 — Prototype by Vinodh Shekhar</span>
+  <span>FrameBench Analyzer ${versionStr} — Prototype by Vinodh Shekhar</span>
   <span>${ts}</span>
 </div>
 

@@ -1,8 +1,8 @@
 [package]
 name = "app"
-version = "1.0.0"
+version = "1.0.3"
 description = "FrameBench Analyzer - GPU driver benchmarking and telemetry analysis"
-authors = ["Vinodh Shekhar"]
+authors = ["Vinodh Shekhar", "Karan Balaji"]
 license = "MIT"
 edition = "2021"
 rust-version = "1.77.2"

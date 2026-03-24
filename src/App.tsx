@@ -195,7 +195,7 @@ export default function App() {
   }, []);
 
   const handleDownloadReport = useCallback(async () => {
-    const reportInput = { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression };
+    const reportInput = { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression, version: appVersion || undefined };
     if (isTauri) {
       const { invoke } = await import('@tauri-apps/api/core');
       const html = buildReportHtml(reportInput);
@@ -211,7 +211,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-nvidia-bg">
-      <Header />
+      <Header version={appVersion} />
 
       {updateInfo && !updateDismissed && (
         <div className="flex items-center justify-between border-b border-nvidia-green/30 bg-nvidia-green/10 px-4 py-2">

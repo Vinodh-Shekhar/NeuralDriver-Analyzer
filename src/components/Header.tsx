@@ -1,6 +1,6 @@
 import DualFanGpu from './DualFanGpu';
 
-export default function Header() {
+export default function Header({ version }: { version?: string }) {
   return (
     <header className="relative overflow-hidden border-b border-nvidia-border bg-nvidia-panel">
       <div className="absolute inset-0 bg-gradient-to-r from-nvidia-green/5 via-transparent to-nvidia-accent/5" />
@@ -24,7 +24,7 @@ export default function Header() {
           <div className="ml-auto">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-nvidia-green/40 bg-nvidia-green/10 px-3 py-1 font-mono text-[11px] font-semibold text-nvidia-green shadow-[0_0_12px_rgba(118,185,0,0.15)]">
               <span className="h-1.5 w-1.5 rounded-full bg-nvidia-green animate-pulse-glow" />
-              Alpha v1.0
+              {version ? `v${version}` : 'Alpha'}
             </span>
           </div>
         </div>

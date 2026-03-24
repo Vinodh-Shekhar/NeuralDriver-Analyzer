@@ -67,6 +67,8 @@ Tauri dev mode (`npm run tauri:dev`) and release builds (`npm run tauri:build`) 
 
 ## Frontend Guidelines
 
+**Always reference `docs/designsystem.md` before making any frontend changes.** It is the source of truth for colors, typography, component patterns, icons, charts, animations, and layout. Do not invent new styles — use the tokens and patterns defined there.
+
 - Gate all Tauri-specific code behind the `isTauri` check:
   ```typescript
   const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -124,8 +126,12 @@ Before any `tauri build`, verify:
 ## Versioning Rules
 
 - **Never hardcode the version string in UI.** The footer and any other UI version display must read it dynamically via `invoke('get_app_info')` (returns `{ version: string }`), stored in React state. The command reads `CARGO_PKG_VERSION` at compile time, which Tauri syncs from `tauri.conf.json`.
-- **When bumping a version for release**, update the version field in **both** `src-tauri/tauri.conf.json` and `package.json` — they must always match.
-- **Tagging for release**: after bumping version and committing, push a `v*` tag (e.g. `git tag v1.0.2 && git push origin main v1.0.2`). This triggers the GitHub Actions release workflow (`.github/workflows/release.yml`) which builds, signs, and creates a draft GitHub Release with `latest.json`. Publish the draft on GitHub to make the update visible to running instances.
+- **When bumping a version for release**, update the version field in **all three**: `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml` — they must always match. `Cargo.toml` is the source for `CARGO_PKG_VERSION` which `get_app_info` returns at runtime; forgetting it causes the UI to show the old version.
+- **Tagging does NOT auto-bump the version.** The git tag only triggers CI to build and publish. You must manually update all three files first, then commit, then tag. The correct release flow is:
+  1. Update `version` in `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml` to the new version (e.g. `1.0.4`)
+  2. Commit the version bump
+  3. `git tag v1.0.4 && git push origin main v1.0.4`
+  4. CI builds and creates a draft GitHub Release — publish it to make the update visible to running instances.
 
 ## Git Commit Rules
 
