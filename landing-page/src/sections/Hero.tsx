@@ -80,7 +80,7 @@ export default function Hero() {
             </div>
 
             <p className="font-mono text-[11px] text-nvidia-muted">
-              Free · Windows 10+ · ~50 MB · No internet required
+              Free · Windows 10+ · No internet required
             </p>
           </div>
 

@@ -38,13 +38,13 @@ export default function DownloadSection() {
           </a>
 
           <p className="font-mono text-[11px] text-nvidia-muted mt-4 mb-12">
-            FrameBench-Analyzer-Setup.exe · ~50 MB · Windows 10+
+            FrameBench-Analyzer-Setup.exe · Windows 10+
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
             <div className="p-5 rounded-lg bg-nvidia-panel-light/50 border border-nvidia-border">
               <Package size={22} className="text-nvidia-green mb-3 mx-auto" />
-              <p className="font-mono text-sm font-bold mb-1">~50 MB Installer</p>
+              <p className="font-mono text-sm font-bold mb-1">Lightweight Installer</p>
               <p className="text-xs text-nvidia-muted font-mono">
                 Bundled WebView2 bootstrapper — no separate runtime downloads
               </p>
