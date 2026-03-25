@@ -52,7 +52,7 @@ export default function AnimatedGraph() {
       ctx.beginPath()
       for (let x = 0; x < width; x++) {
         const y = waveFn(x, time)
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
       }
       ctx.stroke()
 
@@ -62,7 +62,7 @@ export default function AnimatedGraph() {
       ctx.beginPath()
       for (let x = 0; x < width; x++) {
         const y = waveFn(x, time)
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
       }
       ctx.stroke()
 
@@ -71,7 +71,7 @@ export default function AnimatedGraph() {
       ctx.beginPath()
       for (let x = 0; x < width; x++) {
         const y = waveFn(x, time)
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
       }
       ctx.lineTo(width, height)
       ctx.lineTo(0, height)

@@ -17,7 +17,7 @@ export default function DownloadSection() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-nvidia-green/40 bg-nvidia-green/10 mb-8 font-mono text-[11px] font-semibold text-nvidia-green">
             <span className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse"></span>
-            Latest Release — v1.0.5
+            Latest Release — v1.0.6
           </div>
 
           <h2 className="text-3xl md:text-4xl font-bold mb-4">

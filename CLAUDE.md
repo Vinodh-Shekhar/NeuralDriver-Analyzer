@@ -169,9 +169,14 @@ If you rename this file in the workflow, you must update all landing page downlo
 ## Versioning Rules
 
 - **Never hardcode the version string in UI.** The footer and any other UI version display must read it dynamically via `invoke('get_app_info')` (returns `{ version: string }`), stored in React state. The command reads `CARGO_PKG_VERSION` at compile time, which Tauri syncs from `tauri.conf.json`.
-- **When bumping a version for release**, update the version field in **all three**: `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml` — they must always match.
+- **When bumping a version for release**, update the version field in **all five places** — they must always match:
+  1. `src-tauri/tauri.conf.json` — `"version"` field
+  2. `package.json` — `"version"` field
+  3. `src-tauri/Cargo.toml` — `version` field
+  4. `landing-page/src/sections/Hero.tsx` — version badge text (e.g. `v1.0.6 — Free for Windows`)
+  5. `landing-page/src/sections/DownloadSection.tsx` — version badge text (e.g. `Latest Release — v1.0.6`)
 - **The correct release flow:**
-  1. Update `version` in `src-tauri/tauri.conf.json`, `package.json`, and `src-tauri/Cargo.toml`
+  1. Update all five version locations listed above
   2. Commit the version bump
   3. `git tag vX.Y.Z && git push origin main vX.Y.Z`
   4. GitHub Actions builds, signs, and creates a draft release — go to GitHub Releases and publish the draft
