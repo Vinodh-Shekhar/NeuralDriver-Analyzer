@@ -8,10 +8,10 @@ interface CredentialProps {
 
 function CredentialCard({ icon, title, description }: CredentialProps) {
   return (
-    <div className="glass glow-border rounded-lg p-6 hover:shadow-glow-lg transition-all duration-300" data-animate>
-      <div className="text-accent mb-4">{icon}</div>
+    <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-6 hover:bg-nvidia-panel-light transition-colors duration-300" data-animate>
+      <div className="text-nvidia-green mb-4">{icon}</div>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-text-secondary text-sm">{description}</p>
+      <p className="text-nvidia-muted font-mono text-sm">{description}</p>
     </div>
   )
 }
@@ -31,16 +31,16 @@ export default function CredibilitySection() {
     {
       icon: <Zap size={28} />,
       title: 'Performance-First Architecture',
-      description: 'High-performance engine handles datasets with thousands of frames instantly',
+      description: 'Rust-powered engine handles datasets with thousands of frames instantly',
     },
   ]
 
   return (
-    <section className="py-32 relative overflow-hidden bg-surface">
+    <section className="py-32 relative overflow-hidden bg-nvidia-bg">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Built for Performance Engineers</h2>
-          <p className="text-xl text-text-secondary max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Built for Performance Engineers</h2>
+          <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
             FrameBench is developed with the rigor and precision demanded by professional GPU validation teams
           </p>
         </div>
@@ -51,11 +51,11 @@ export default function CredibilitySection() {
           ))}
         </div>
 
-        <div className="glass glow-border rounded-lg p-8 md:p-12">
+        <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-8 md:p-12">
           <h3 className="text-2xl font-bold mb-6">Why Performance Engineers Choose FrameBench</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              'Inspired by NVIDIA FrameView and AMD driver validation tools',
+              'Built using real-world GPU performance validation workflows',
               'Detects anomalies that FPS alone cannot reveal',
               'Exportable reports for compliance and stakeholder communication',
               'Handles complex, multi-dataset analysis workflows',
@@ -63,8 +63,8 @@ export default function CredibilitySection() {
               'Lightweight, runs on any Windows system',
             ].map((reason, idx) => (
               <div key={idx} className="flex gap-3 items-start">
-                <span className="text-accent text-xl leading-none mt-0.5">✓</span>
-                <p className="text-text-secondary">{reason}</p>
+                <span className="text-nvidia-green text-xl leading-none mt-0.5">✓</span>
+                <p className="text-nvidia-muted font-mono text-sm">{reason}</p>
               </div>
             ))}
           </div>

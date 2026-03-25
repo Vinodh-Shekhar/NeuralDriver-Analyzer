@@ -39,8 +39,12 @@ jobs:
       - name: Generate latest.json for updater
         shell: pwsh
         run: |
+          $sigFile = Get-ChildItem "src-tauri/target/release/bundle/nsis/*.nsis.zip.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $sigFile) {
+            Write-Host "::warning::No .nsis.zip.sig found — TAURI_SIGNING_PRIVATE_KEY may not be set or signing failed. Skipping latest.json."
+            exit 0
+          }
           $version = "${{ github.ref_name }}".TrimStart('v')
-          $sigFile = Get-ChildItem "src-tauri/target/release/bundle/nsis/*.nsis.zip.sig" | Select-Object -First 1
           $sig = (Get-Content $sigFile.FullName -Raw).Trim()
           $zipName = $sigFile.Name.Replace('.sig', '')
           $baseUrl = "https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/download/${{ github.ref_name }}"
@@ -72,6 +76,7 @@ jobs:
           draft: true
           name: FrameBench Analyzer ${{ github.ref_name }}
           body: See the assets below to download this version and install it.
+          fail_on_unmatched_files: false
           files: |
             FrameBench-Analyzer-Setup.exe
             src-tauri/target/release/bundle/nsis/*.nsis.zip

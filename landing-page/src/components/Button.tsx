@@ -2,13 +2,11 @@ import { ReactNode } from 'react'
 
 interface ButtonProps {
   children: ReactNode
-  variant?: 'primary' | 'secondary' | 'outline'
+  variant?: 'primary' | 'secondary'
   size?: 'sm' | 'md' | 'lg'
   className?: string
   onClick?: () => void
   href?: string
-  target?: string
-  rel?: string
 }
 
 export default function Button({
@@ -18,28 +16,30 @@ export default function Button({
   className = '',
   onClick,
   href,
-  target,
-  rel,
 }: ButtonProps) {
-  const baseStyles = 'font-mono font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-tight'
+  const baseStyles = 'font-mono rounded transition-all duration-300 flex items-center justify-center gap-2'
 
   const variants = {
-    primary: 'bg-nvidia-green text-black hover:bg-nvidia-accent glow-green shimmer-btn',
-    secondary: 'bg-nvidia-panel text-nvidia-green border border-nvidia-border hover:bg-nvidia-panel-light hover:border-nvidia-green/50',
-    outline: 'border border-nvidia-green/40 bg-nvidia-green/10 text-nvidia-green hover:bg-nvidia-green/20 glow-green',
+    primary: 'shimmer-btn bg-nvidia-green/10 text-nvidia-green border border-nvidia-green/50 hover:bg-nvidia-green/20',
+    secondary: 'border border-nvidia-border/50 bg-nvidia-bg/40 hover:bg-nvidia-panel-light text-nvidia-text transition-colors',
   }
 
   const sizes = {
-    sm: 'px-4 py-1.5 text-[11px]',
-    md: 'px-6 py-2.5 text-sm',
-    lg: 'px-8 py-3.5 text-base',
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-6 py-3 text-base',
+    lg: 'px-8 py-4 text-lg',
   }
 
-  const combinedClasses = `${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`
+  const buttonClasses = `${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`
 
   if (href) {
     return (
-      <a href={href} target={target} rel={rel} className={combinedClasses} onClick={onClick}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonClasses}
+      >
         {children}
       </a>
     )
@@ -48,7 +48,7 @@ export default function Button({
   return (
     <button
       onClick={onClick}
-      className={combinedClasses}
+      className={buttonClasses}
     >
       {children}
     </button>

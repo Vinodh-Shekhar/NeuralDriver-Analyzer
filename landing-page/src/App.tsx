@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import Header from './components/Header'
+import Navbar from './components/Navbar'
 import Hero from './sections/Hero'
 import CoreCapabilities from './sections/CoreCapabilities'
 import Differentiation from './sections/Differentiation'
@@ -28,8 +28,8 @@ export default function App() {
   }, [])
 
   return (
-    <div className="w-full bg-nvidia-bg text-nvidia-text overflow-x-hidden pt-16">
-      <Header />
+    <div className="w-full bg-nvidia-bg text-nvidia-text overflow-x-hidden">
+      <Navbar />
       <Hero />
       <CoreCapabilities />
       <Differentiation />

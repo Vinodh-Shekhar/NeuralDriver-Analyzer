@@ -1,66 +1,86 @@
-import { Download, Package, Zap, ShieldCheck } from 'lucide-react'
-import Button from '../components/Button'
+import { Download, Package, Zap, WifiOff } from 'lucide-react'
+
+const DOWNLOAD_URL =
+  'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe'
 
 export default function DownloadSection() {
   return (
-    <section id="download" className="py-32 relative overflow-hidden bg-nvidia-bg">
+    <section id="download-section" className="py-32 relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-nvidia-green/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-nvidia-green/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-nvidia-accent/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 max-w-4xl">
-        <div className="rounded-2xl border border-nvidia-border bg-nvidia-panel p-12 md:p-20 text-center glow-green animate-slide-up">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 font-mono tracking-tight uppercase">Get Started Today</h2>
-          <p className="text-lg text-nvidia-muted mb-12 max-w-2xl mx-auto font-mono">
-            Download the professional-grade <span className="text-nvidia-text">FrameBench Analyzer</span>. Optimized for Windows 10/11 with zero external dependencies.
+        <div className="rounded-lg border border-nvidia-green/30 bg-nvidia-panel glow-green p-10 md:p-16 text-center animate-fade-in">
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-nvidia-green/40 bg-nvidia-green/10 mb-8 font-mono text-[11px] font-semibold text-nvidia-green">
+            <span className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse"></span>
+            Latest Release — v1.0.5
+          </div>
+
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Download FrameBench Analyzer
+          </h2>
+          <p className="text-base text-nvidia-muted font-mono mb-10 max-w-xl mx-auto">
+            Free desktop app for Windows. Zero cloud. Full control. Analyze frame-time telemetry in minutes.
           </p>
 
-          <div className="flex gap-6 justify-center items-center flex-wrap mb-12">
-            <Button
-              variant="primary"
-              size="lg"
-              href="https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Download size={20} />
-              Download v1.2.0 (.exe)
-            </Button>
+          <a
+            href={DOWNLOAD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shimmer-btn inline-flex items-center gap-3 px-10 py-4 rounded border border-nvidia-green/60 bg-nvidia-green/15 text-nvidia-green font-mono text-lg hover:bg-nvidia-green/25 transition-colors"
+          >
+            <Download size={22} />
+            Download for Windows
+          </a>
+
+          <p className="font-mono text-[11px] text-nvidia-muted mt-4 mb-12">
+            FrameBench-Analyzer-Setup.exe · ~50 MB · Windows 10+
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+            <div className="p-5 rounded-lg bg-nvidia-panel-light/50 border border-nvidia-border">
+              <Package size={22} className="text-nvidia-green mb-3 mx-auto" />
+              <p className="font-mono text-sm font-bold mb-1">~50 MB Installer</p>
+              <p className="text-xs text-nvidia-muted font-mono">
+                Bundled WebView2 bootstrapper — no separate runtime downloads
+              </p>
+            </div>
+            <div className="p-5 rounded-lg bg-nvidia-panel-light/50 border border-nvidia-border">
+              <Zap size={22} className="text-nvidia-green mb-3 mx-auto" />
+              <p className="font-mono text-sm font-bold mb-1">Rust-Powered Engine</p>
+              <p className="text-xs text-nvidia-muted font-mono">
+                Processes thousands of frames in milliseconds with zero lag
+              </p>
+            </div>
+            <div className="p-5 rounded-lg bg-nvidia-panel-light/50 border border-nvidia-border">
+              <WifiOff size={22} className="text-nvidia-green mb-3 mx-auto" />
+              <p className="font-mono text-sm font-bold mb-1">Fully Offline</p>
+              <p className="text-xs text-nvidia-muted font-mono">
+                No telemetry, no cloud — runs entirely on your machine
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-4 rounded-lg border border-nvidia-border bg-nvidia-bg/50 group hover:border-nvidia-green/30 transition-colors">
-              <Package size={24} className="text-nvidia-green mb-3 mx-auto" />
-              <p className="font-mono text-sm font-bold text-nvidia-text mb-1 uppercase">Lightweight</p>
-              <p className="font-mono text-[11px] text-nvidia-muted">~50MB portable binary</p>
-            </div>
-            <div className="p-4 rounded-lg border border-nvidia-border bg-nvidia-bg/50 group hover:border-nvidia-green/30 transition-colors">
-              <Zap size={24} className="text-nvidia-green mb-3 mx-auto" />
-              <p className="font-mono text-sm font-bold text-nvidia-text mb-1 uppercase">Fast Analysis</p>
-              <p className="font-mono text-[11px] text-nvidia-muted">High-performance engine</p>
-            </div>
-            <div className="p-4 rounded-lg border border-nvidia-border bg-nvidia-bg/50 group hover:border-nvidia-green/30 transition-colors">
-              <ShieldCheck size={24} className="text-nvidia-green mb-3 mx-auto" />
-              <p className="font-mono text-sm font-bold text-nvidia-text mb-1 uppercase">Secure</p>
-              <p className="font-mono text-[11px] text-nvidia-muted">100% Offline processing</p>
-            </div>
-          </div>
-
-          <div className="mt-12 pt-8 border-t border-nvidia-border text-left">
-            <h3 className="font-mono text-sm font-bold text-nvidia-text mb-4 uppercase tracking-wider">System Requirements</h3>
-            <ul className="space-y-2 font-mono text-nvidia-muted text-[11px]">
-              <li className="flex gap-2">
-                <span className="text-nvidia-green">/</span>
-                Windows 10 / 11 (x64)
-              </li>
-              <li className="flex gap-2">
-                <span className="text-nvidia-green">/</span>
-                NVIDIA / AMD / Intel GPU
-              </li>
-              <li className="flex gap-2">
-                <span className="text-nvidia-green">/</span>
-                Input: FrameView or PresentMon CSV
-              </li>
+          <div className="pt-8 border-t border-nvidia-border text-left">
+            <h3 className="font-mono text-xs font-bold mb-4 text-nvidia-text uppercase tracking-wider">
+              System Requirements
+            </h3>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-nvidia-muted text-xs font-mono">
+              {[
+                'Windows 10 or later (64-bit)',
+                '4 GB RAM minimum',
+                'NVIDIA, AMD, or Intel GPU with current drivers',
+                'CSV telemetry from FrameView or PresentMon',
+              ].map((req, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-nvidia-green flex-shrink-0">›</span>
+                  {req}
+                </li>
+              ))}
             </ul>
           </div>
         </div>

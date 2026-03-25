@@ -4,45 +4,45 @@ import FeatureCard from '../components/FeatureCard'
 export default function Differentiation() {
   const features = [
     {
-      icon: <Zap size={24} />,
+      icon: <Zap size={28} />,
       title: 'Actionable Insights',
-      description: 'Go beyond raw numbers. Our engine automatically flags performance regressions and micro-stutters with clear visual indicators.',
+      description: 'Not just telemetry—automated analysis that tells you exactly what to fix and why',
     },
     {
-      icon: <BarChart3 size={24} />,
-      title: 'Statistical Precision',
-      description: 'Utilize Z-score based anomaly detection and frame-time distribution analysis to validate performance consistency across any dataset.',
+      icon: <BarChart3 size={28} />,
+      title: 'Automated Regression Detection',
+      description: 'Z-score based statistical anomaly detection catches performance drops instantly',
     },
     {
-      icon: <Cpu size={24} />,
-      title: 'Driver QA Workflow',
-      description: 'Designed specifically for GPU driver validation teams. Import CSV telemetry from FrameView or PresentMon and generate reports in seconds.',
+      icon: <Cpu size={28} />,
+      title: 'Built for QA Workflows',
+      description: 'Designed using real-world GPU driver validation processes from major vendors',
     },
     {
-      icon: <Lightbulb size={24} />,
-      title: 'Automated Scoring',
-      description: 'A unified PASS/WARNING/FAIL system based on industry-standard stability metrics like 1% lows and Pacing Stability.',
+      icon: <Lightbulb size={28} />,
+      title: 'Performance Scoring',
+      description: 'Clear PASS/WARNING/FAIL verdicts with exportable reports for validation teams',
     },
   ]
 
   return (
-    <section className="py-32 relative overflow-hidden bg-nvidia-panel/20 border-y border-nvidia-border">
-      <div className="absolute inset-0 opacity-5">
+    <section className="py-32 relative overflow-hidden bg-nvidia-panel-light/30">
+      <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-96 h-96 bg-nvidia-green/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-nvidia-accent/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 max-w-6xl">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 font-mono tracking-tight uppercase">Why FrameBench?</h2>
-          <p className="text-lg text-nvidia-muted max-w-2xl mx-auto font-mono">
-            Engineered for high-performance <span className="text-nvidia-text underline decoration-nvidia-green decoration-2 underline-offset-4">validation pipelines</span> where every millisecond counts.
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">What Makes FrameBench Different</h2>
+          <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
+            Engineered for precise GPU performance validation and frame-time intelligence
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {features.map((feature, idx) => (
-            <div key={idx}>
+            <div key={idx} data-animate>
               <FeatureCard {...feature} />
             </div>
           ))}

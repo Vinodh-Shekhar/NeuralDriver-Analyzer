@@ -9,14 +9,14 @@ interface FeatureDiveProps {
 
 function FeatureDiveCard({ icon, title, description, capabilities }: FeatureDiveProps) {
   return (
-    <div className="glass glow-border rounded-lg p-8 hover:shadow-glow-lg transition-all duration-300" data-animate>
-      <div className="text-accent mb-4 flex justify-center">{icon}</div>
+    <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-8 hover:bg-nvidia-panel-light transition-colors duration-300" data-animate>
+      <div className="text-nvidia-green mb-4 flex justify-center">{icon}</div>
       <h3 className="text-xl font-bold text-center mb-4">{title}</h3>
-      <p className="text-text-secondary text-center mb-6">{description}</p>
+      <p className="text-nvidia-muted font-mono text-center mb-6">{description}</p>
       <ul className="space-y-3">
         {capabilities.map((cap, idx) => (
-          <li key={idx} className="flex gap-2 items-center text-sm text-text-secondary">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0"></span>
+          <li key={idx} className="flex gap-2 items-center text-sm text-nvidia-muted font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-nvidia-green flex-shrink-0"></span>
             {cap}
           </li>
         ))}
@@ -85,11 +85,11 @@ export default function FeatureDeepDive() {
   ]
 
   return (
-    <section id="features" className="py-32 relative overflow-hidden bg-surface-alt">
+    <section className="py-32 relative overflow-hidden bg-nvidia-panel-light/30">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Feature Deep Dive</h2>
-          <p className="text-xl text-text-secondary max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Feature Deep Dive</h2>
+          <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
             Comprehensive tools for professional GPU performance analysis
           </p>
         </div>

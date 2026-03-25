@@ -4,33 +4,33 @@ export default function ComparisonShowcase() {
   const [activeTab, setActiveTab] = useState<'stable' | 'comparison'>('stable')
 
   return (
-    <section className="py-32 relative overflow-hidden bg-nvidia-bg">
+    <section className="py-32 relative overflow-hidden">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 font-mono tracking-tight uppercase">Performance Benchmarks</h2>
-          <p className="text-lg text-nvidia-muted max-w-2xl mx-auto font-mono">
-            Visualize real-world <span className="text-nvidia-green">frame-time telemetry</span> analyzed side-by-side.
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Visual Performance Comparison</h2>
+          <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
+            See real performance data analyzed side-by-side
           </p>
         </div>
 
-        <div className="mb-10">
-          <div className="flex gap-2 justify-center">
+        <div className="mb-8">
+          <div className="flex gap-4 justify-center">
             <button
               onClick={() => setActiveTab('stable')}
-              className={`px-6 py-2 rounded-md font-mono text-xs font-bold transition-all uppercase tracking-wider border ${
+              className={`px-6 py-3 rounded font-mono text-sm transition-all ${
                 activeTab === 'stable'
-                  ? 'bg-nvidia-green text-black border-nvidia-green glow-green'
-                  : 'bg-nvidia-panel text-nvidia-muted border-nvidia-border hover:border-nvidia-green/40'
+                  ? 'bg-nvidia-green/10 text-nvidia-green border border-nvidia-green/50 shimmer-btn'
+                  : 'border border-nvidia-border/50 bg-nvidia-bg/40 text-nvidia-text hover:bg-nvidia-panel-light'
               }`}
             >
-              Single Dataset
+              Stable Performance
             </button>
             <button
               onClick={() => setActiveTab('comparison')}
-              className={`px-6 py-2 rounded-md font-mono text-xs font-bold transition-all uppercase tracking-wider border ${
+              className={`px-6 py-3 rounded font-mono text-sm transition-all ${
                 activeTab === 'comparison'
-                  ? 'bg-nvidia-green text-black border-nvidia-green glow-green'
-                  : 'bg-nvidia-panel text-nvidia-muted border-nvidia-border hover:border-nvidia-green/40'
+                  ? 'bg-nvidia-green/10 text-nvidia-green border border-nvidia-green/50 shimmer-btn'
+                  : 'border border-nvidia-border/50 bg-nvidia-bg/40 text-nvidia-text hover:bg-nvidia-panel-light'
               }`}
             >
               Driver Comparison
@@ -38,69 +38,53 @@ export default function ComparisonShowcase() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-nvidia-border bg-nvidia-panel overflow-hidden p-8 glow-green animate-slide-up">
+        <div className="rounded-lg border border-nvidia-border bg-nvidia-panel overflow-hidden p-8 animate-fade-in">
           {activeTab === 'stable' ? (
-            <div className="animate-fade-in">
-              <div className="relative group overflow-hidden rounded-lg border border-nvidia-border mb-6">
-                <img
-                  src="/image.png"
-                  alt="Stable performance benchmark"
-                  className="w-full h-auto opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                />
-                <div className="absolute top-4 right-4 px-3 py-1 bg-nvidia-green/20 border border-nvidia-green/40 backdrop-blur-md rounded-full">
-                  <span className="font-mono text-[10px] font-bold text-nvidia-green uppercase tracking-widest">Baseline Build</span>
-                </div>
-              </div>
-              <div className="p-6 bg-nvidia-bg/50 rounded-lg border border-nvidia-border">
-                <h3 className="font-mono text-sm font-bold text-nvidia-green mb-4 uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-nvidia-green"></span>
-                  Telemetry Analysis
-                </h3>
-                <ul className="space-y-3 font-mono text-[11px] text-nvidia-muted uppercase tracking-tight">
-                  <li className="flex gap-3 items-center">
-                    <span className="text-nvidia-green">/</span>
-                    Consistent frame delivery: 4.2ms avg variance
+            <div data-animate>
+              <img
+                src="image.png"
+                alt="Stable performance benchmark"
+                className="w-full h-auto rounded-lg"
+              />
+              <div className="mt-6 p-4 bg-nvidia-panel-light rounded-lg border border-nvidia-border">
+                <h3 className="text-lg font-bold text-nvidia-green mb-2 font-mono">Stable Frame Timing</h3>
+                <ul className="space-y-2 text-nvidia-muted text-sm font-mono">
+                  <li className="flex gap-2">
+                    <span className="text-nvidia-green">›</span>
+                    Consistent frame delivery with minimal variance
                   </li>
-                  <li className="flex gap-3 items-center">
-                    <span className="text-nvidia-green">/</span>
-                    Frame timing clustering around 144Hz target
+                  <li className="flex gap-2">
+                    <span className="text-nvidia-green">›</span>
+                    Frame time clustering around target framerate
                   </li>
-                  <li className="flex gap-3 items-center">
-                    <span className="text-nvidia-green">/</span>
-                    0.0% Stutter score detected in 60s sample
+                  <li className="flex gap-2">
+                    <span className="text-nvidia-green">›</span>
+                    No perceptible stutter or frame spikes
                   </li>
                 </ul>
               </div>
             </div>
           ) : (
-            <div className="animate-fade-in">
-              <div className="relative group overflow-hidden rounded-lg border border-nvidia-border mb-6">
-                <img
-                  src="/edited-photo.png"
-                  alt="Driver comparison benchmark"
-                  className="w-full h-auto opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                />
-                <div className="absolute top-4 right-4 px-3 py-1 bg-nvidia-accent/20 border border-nvidia-accent/40 backdrop-blur-md rounded-full">
-                  <span className="font-mono text-[10px] font-bold text-nvidia-accent uppercase tracking-widest">A/B Regression Check</span>
-                </div>
-              </div>
-              <div className="p-6 bg-nvidia-bg/50 rounded-lg border border-nvidia-border">
-                <h3 className="font-mono text-sm font-bold text-nvidia-accent mb-4 uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-nvidia-accent"></span>
-                  Comparative Metrics
-                </h3>
-                <ul className="space-y-3 font-mono text-[11px] text-nvidia-muted uppercase tracking-tight">
-                  <li className="flex gap-3 items-center">
-                    <span className="text-nvidia-accent">/</span>
-                    Dataset A (Build 551.23): 238.3 Avg FPS
+            <div data-animate>
+              <img
+                src="edited-photo.png"
+                alt="Driver comparison benchmark"
+                className="w-full h-auto rounded-lg"
+              />
+              <div className="mt-6 p-4 bg-nvidia-panel-light rounded-lg border border-nvidia-border">
+                <h3 className="text-lg font-bold text-nvidia-green mb-2 font-mono">Driver A vs Driver B Analysis</h3>
+                <ul className="space-y-2 text-nvidia-muted text-sm font-mono">
+                  <li className="flex gap-2">
+                    <span className="text-nvidia-green">›</span>
+                    Dataset A: 7,123 frames @ 238.3 avg FPS
                   </li>
-                  <li className="flex gap-3 items-center">
-                    <span className="text-nvidia-accent">/</span>
-                    Dataset B (Build 555.85): 277.2 Avg FPS
+                  <li className="flex gap-2">
+                    <span className="text-nvidia-green">›</span>
+                    Dataset B: 8,023 frames @ 277.2 avg FPS
                   </li>
-                  <li className="flex gap-3 items-center">
-                    <span className="text-nvidia-accent">/</span>
-                    Delta: +16.3% performance uplift detected
+                  <li className="flex gap-2">
+                    <span className="text-nvidia-green">›</span>
+                    Performance improvement: ~16% on Driver B
                   </li>
                 </ul>
               </div>

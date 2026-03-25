@@ -28,7 +28,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM0MDdGNjI5MjEwMzVEQUMKUldTc1hRTWhLZllITkFEVldqcDFrV25Bd2trcDdLYndwN01NcmdMd2VTa003RFYrWVMrODRGazMK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYyM0FFQzIxRkUzNzU2QzYKUldUR1ZqZitJZXc2OGtkcE52eHJWVWxwVFRDNDhpN0tHQUR6dHBldzE2R3drNzIxQ1BJTW5EamcK",
       "endpoints": [
         "https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/latest.json"
       ]

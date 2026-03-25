@@ -1,89 +1,132 @@
-import { Download, Play, Activity, Cpu } from 'lucide-react'
-import Button from '../components/Button'
+import { Download, Github } from 'lucide-react'
 import AnimatedGraph from '../components/AnimatedGraph'
+
+const DOWNLOAD_URL =
+  'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe'
+const GITHUB_URL = 'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer'
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen pt-20 pb-32 overflow-hidden flex items-center bg-nvidia-bg">
-      {/* Background grid */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#333_1px,transparent_1px),linear-gradient(to_bottom,#333_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+    <section className="relative pt-32 pb-20 overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-nvidia-green/5 via-transparent to-transparent"></div>
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-nvidia-green/30 to-transparent"></div>
       </div>
-
-      {/* Animated background elements */}
-      <div className="absolute top-20 right-10 w-72 h-72 bg-nvidia-green/10 rounded-full blur-3xl opacity-30 animate-float"></div>
-      <div className="absolute bottom-10 left-10 w-96 h-96 bg-nvidia-accent/5 rounded-full blur-3xl opacity-20"></div>
+      <div className="absolute top-24 right-8 w-80 h-80 bg-nvidia-green/10 rounded-full blur-3xl opacity-25 animate-pulse-glow"></div>
+      <div className="absolute bottom-12 left-8 w-96 h-96 bg-nvidia-accent/5 rounded-full blur-3xl opacity-20"></div>
 
       <div className="relative z-10 container mx-auto px-4 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left content */}
           <div className="space-y-8 animate-fade-in">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-nvidia-green/40 bg-nvidia-green/10 mb-4">
-                <span className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse-glow"></span>
-                <span className="font-mono text-[11px] font-bold text-nvidia-green uppercase tracking-wider">v1.2.0 Stable Build</span>
-              </div>
+            {/* Version badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-nvidia-green/40 bg-nvidia-green/10 font-mono text-[11px] font-semibold text-nvidia-green">
+              <span className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse"></span>
+              v1.0.5 — Free for Windows
+            </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight font-mono">
-                Beyond FPS: <span className="text-nvidia-green text-glow-green">Understand Frame Behavior</span>
+            {/* Headline */}
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight mb-4">
+                Beyond FPS.<br />
+                <span className="text-nvidia-green text-glow-green">
+                  Understand Frame<br />Behavior.
+                </span>
               </h1>
+              <p className="text-base text-nvidia-muted leading-relaxed font-mono">
+                Analyze frame-time telemetry, detect stutter, and validate GPU driver performance with precision. Detect regressions and generate shareable reports — in minutes.
+              </p>
             </div>
 
-            <p className="text-lg text-nvidia-muted leading-relaxed font-mono">
-              Analyze <span className="text-nvidia-text">Frame-Time Telemetry</span>, detect <span className="text-nvidia-text">Micro-Stutters</span>, and validate <span className="text-nvidia-text">Driver Stability</span> with professional-grade precision.
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 py-2">
-              <div className="flex items-center gap-2 text-sm text-nvidia-muted font-mono">
-                <Activity size={16} className="text-nvidia-green" />
-                <span>Pacing Stability</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-nvidia-muted font-mono">
-                <Cpu size={16} className="text-nvidia-green" />
-                <span>Regression Analysis</span>
-              </div>
+            {/* Quick stats row */}
+            <div className="flex flex-wrap gap-8 py-5 border-t border-b border-nvidia-border">
+              {[
+                { value: '2–3', label: 'driver builds compared' },
+                { value: '16+', label: 'metrics tracked' },
+                { value: '0', label: 'cloud dependencies' },
+              ].map((stat, i) => (
+                <div key={i}>
+                  <p className="font-mono text-2xl font-bold text-nvidia-green leading-none mb-1">
+                    {stat.value}
+                  </p>
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-nvidia-muted">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button
-                variant="primary"
-                size="lg"
-                href="https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe"
+            {/* CTA buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a
+                href={DOWNLOAD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="shimmer-btn flex items-center justify-center gap-2 px-8 py-4 rounded border border-nvidia-green/50 bg-nvidia-green/10 text-nvidia-green font-mono text-base hover:bg-nvidia-green/20 transition-colors"
               >
                 <Download size={18} />
-                Download Setup
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                href="analyzer/"
+                Download for Windows
+              </a>
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded border border-nvidia-border/50 bg-nvidia-bg/40 text-nvidia-text font-mono text-base hover:bg-nvidia-panel-light transition-colors"
               >
-                <Play size={18} />
-                Launch Web App
-              </Button>
+                <Github size={18} />
+                View on GitHub
+              </a>
             </div>
 
-            <div className="pt-8 border-t border-nvidia-border space-y-3">
-              <p className="font-mono text-[11px] text-nvidia-muted uppercase tracking-widest">Native Performance • 0.0ms Analysis Overhead</p>
-            </div>
+            <p className="font-mono text-[11px] text-nvidia-muted">
+              Free · Windows 10+ · ~50 MB · No internet required
+            </p>
           </div>
 
-          {/* Right animated graph */}
+          {/* Right — animated graph panel */}
           <div className="relative animate-slide-up">
-            <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-4 glow-green">
-              <div className="flex items-center justify-between mb-4 border-b border-nvidia-border/50 pb-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-nvidia-danger/20 border border-nvidia-danger/40"></div>
-                  <div className="w-3 h-3 rounded-full bg-nvidia-warning/20 border border-nvidia-warning/40"></div>
-                  <div className="w-3 h-3 rounded-full bg-nvidia-green/20 border border-nvidia-green/40"></div>
+            <div className="rounded-lg border border-nvidia-border bg-nvidia-panel overflow-hidden">
+              {/* Panel header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-nvidia-border">
+                <span className="font-mono text-[11px] text-nvidia-muted uppercase tracking-wider">
+                  Frame Time Analysis — Live Preview
+                </span>
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] text-nvidia-green">
+                    <span className="w-2 h-2 rounded-full bg-nvidia-green flex-shrink-0"></span>
+                    Driver A
+                  </span>
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] text-nvidia-accent">
+                    <span className="w-2 h-2 rounded-full bg-nvidia-accent flex-shrink-0"></span>
+                    Driver B
+                  </span>
                 </div>
-                <div className="font-mono text-[10px] text-nvidia-muted uppercase tracking-tighter">Live Telemetry Visualization</div>
               </div>
-              <AnimatedGraph />
+              <div className="p-4">
+                <AnimatedGraph />
+              </div>
+              {/* Panel footer metrics */}
+              <div className="grid grid-cols-3 border-t border-nvidia-border">
+                {[
+                  { label: 'Avg FPS', a: '238.3', b: '277.2' },
+                  { label: 'Stutter', a: '3.2%', b: '1.1%' },
+                  { label: 'Score', a: '74', b: '91' },
+                ].map((m, i) => (
+                  <div key={i} className={`px-4 py-3 ${i < 2 ? 'border-r border-nvidia-border' : ''}`}>
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-nvidia-muted mb-1.5">
+                      {m.label}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-nvidia-green">{m.a}</span>
+                      <span className="font-mono text-[9px] text-nvidia-muted">→</span>
+                      <span className="font-mono text-xs font-bold text-nvidia-accent">{m.b}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+            <div className="absolute inset-0 rounded-lg glow-green pointer-events-none opacity-20"></div>
           </div>
         </div>
       </div>
