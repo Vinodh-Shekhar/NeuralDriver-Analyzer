@@ -34,11 +34,11 @@ export default function App() {
       <Hero />
       <ComparisonShowcase />
       <CoreCapabilities />
-      <HowItWorks />
-      <Differentiation />
+      <HowItWorks /> 
       <UseCases />
       <FeatureDeepDive />
       <CredibilitySection />
+      <Differentiation />
       <DownloadSection />
       <Footer />
     </div>
