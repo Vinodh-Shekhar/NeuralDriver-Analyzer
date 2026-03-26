@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   // Tauri: don't clear terminal output so Tauri can print to it
   clearScreen: false,
-  base: process.env.GITHUB_ACTIONS ? '/FrameBench-Analyzer/analyzer/' : '/',
+  base: process.env.BUILD_FOR_WEB ? '/FrameBench-Analyzer/analyzer/' : '/',
   server: {
     port: 5173,
     // Tauri expects a specific port; don't fail if 5173 is busy
@@ -21,8 +21,8 @@ export default defineConfig({
     // Don't minify in debug builds (TAURI_DEBUG is set by `tauri dev`)
     minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
     sourcemap: !!process.env.TAURI_DEBUG,
-    outDir: process.env.GITHUB_ACTIONS ? 'dist/analyzer' : 'dist',
-    emptyOutDir: !process.env.GITHUB_ACTIONS, // Don't clear dist when building sub-path
+    outDir: process.env.BUILD_FOR_WEB ? 'dist/analyzer' : 'dist',
+    emptyOutDir: !process.env.BUILD_FOR_WEB, // Don't clear dist when building sub-path
   },
   optimizeDeps: {
     exclude: ['lucide-react'],

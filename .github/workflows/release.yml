@@ -74,6 +74,12 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
+          $v107 = "## v1.0.7 - Bug Fixes and Landing Page Improvements`n`n" +
+            "### Bug Fixes`n" +
+            "- **Fixed 'asset not found: index.html' in release builds**: vite.config.ts was using the GITHUB_ACTIONS env var (auto-set on all CI runs) to switch the Vite base path and outDir for GitHub Pages. This caused the Tauri release build to output to dist/analyzer/ with base /FrameBench-Analyzer/analyzer/ — making WebView2 unable to find index.html. Fixed by replacing the GITHUB_ACTIONS condition with a dedicated BUILD_FOR_WEB env var that is only set in the Pages deploy step of main.yml.`n" +
+            "- **Fixed download URL always pointing to v1.0.6**: DownloadSection.tsx had a hardcoded versioned release URL instead of the stable releases/latest/download/ permalink. Now always serves the newest installer without requiring a landing page update on every release.`n`n" +
+            "### Auto-Update`n" +
+            "Users on v1.0.6 and below will see an in-app update prompt on next launch."
           $v106 = "## v1.0.6 - Release Pipeline and Landing Page Overhaul`n`n" +
             "### Bug Fixes`n" +
             "- **Fixed broken download**: Release workflow now always uploads FrameBench-Analyzer-Setup.exe even when updater signing is unavailable. Previously the workflow crashed before uploading any files, causing a 404 on every download link.`n" +
@@ -126,6 +132,7 @@ jobs:
             "- GitHub Actions release workflow: builds, signs, and creates a GitHub Release on every v* tag push; generates latest.json for the updater endpoint`n" +
             "- Update banner UI: non-intrusive banner appears when a newer version is available with Update / Later actions"
           $notes = switch ($tag) {
+            "v1.0.7" { $v107 }
             "v1.0.6" { $v106 }
             "v1.0.5" { $v105 }
             "v1.0.4" { $v104 }

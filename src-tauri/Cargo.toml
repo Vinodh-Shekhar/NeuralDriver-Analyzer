@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.6"
+version = "1.0.7"
 description = "FrameBench Analyzer - GPU driver benchmarking and telemetry analysis"
 authors = ["Vinodh Shekhar", "Karan Balaji"]
 license = "MIT"
