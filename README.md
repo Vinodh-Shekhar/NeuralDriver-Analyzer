@@ -8,10 +8,6 @@ Supports native NVIDIA FrameView CSV exports and generic frame time formats. Shi
 
 ![FrameBench Analyzer](public/screenshots/framebench-analyzer.png)
 
-## Performance Report
-
-![Performance Report](public/screenshots/Performance-Report.png)
-
 ## Live Demo
 
 https://vinodh-framebench-analyzer.bolt.host
@@ -26,14 +22,12 @@ https://vinodh-framebench-analyzer.bolt.host
 - [Rust](https://rustup.rs/) — desktop app only
 - Windows 10 1803+ or Windows 11 — WebView2 is pre-installed via Edge; the setup installer bundles a bootstrapper for older machines
 
-### Web / PWA
-
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Install as a PWA from the browser's install prompt for offline support.
+Open `http://localhost:5173`. 
 
 ### Windows Desktop App (Tauri)
 
@@ -249,7 +243,7 @@ Built as a tooling prototype for hardware performance analysis and GPU driver QA
 
 ## Author
 
-Vinodh Shekhar
+Vinodh Shekhar -Gamer and AI Product Manager
 
 ---
 
