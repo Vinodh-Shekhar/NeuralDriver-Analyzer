@@ -205,7 +205,7 @@ export default function App() {
     } else {
       generateReport(reportInput);
     }
-  }, [datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression, isTauri]);
+  }, [datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression, isTauri, appVersion]);
 
   const hasData = !!datasetA || !!datasetB;
 
