@@ -253,7 +253,7 @@ Built as a tooling prototype for hardware performance analysis and GPU driver QA
 
 ## Author
 
-Vinodh Shekhar -Gamer and AI Product Manager
+Vinodh Shekhar
 
 ---
 
